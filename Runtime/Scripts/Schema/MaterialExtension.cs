@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 
+using Character = GLTFast.Schema.CustomMaterials.Character;
+
 namespace GLTFast.Schema {
 
     /// <summary>
@@ -39,9 +41,13 @@ namespace GLTFast.Schema {
         
         /// <inheritdoc cref="PbrSpecularGlossiness"/>
         public Sheen KHR_materials_sheen;
-        
+
+        public Character.MaterialEmpty VENDOR_materials_characterEmpty;
+
+        public Character.MaterialSkinSSS VENDOR_materials_characterSkinSSS;
+
         // ReSharper restore InconsistentNaming
-        
+
         internal void GltfSerialize(JsonWriter writer) {
             writer.AddObject();
             if(KHR_materials_pbrSpecularGlossiness!=null) {
@@ -63,6 +69,16 @@ namespace GLTFast.Schema {
             if(KHR_materials_sheen!=null) {
                 writer.AddProperty("KHR_materials_sheen");
                 KHR_materials_sheen.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterEmpty != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterEmpty");
+                VENDOR_materials_characterEmpty.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterSkinSSS != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterSkinSSS");
+                VENDOR_materials_characterSkinSSS.GltfSerialize(writer);
             }
             writer.Close();
         }
