@@ -3,6 +3,7 @@ using UnityEngine;
 namespace GLTFast.Schema.CustomMaterials.Character
 {
 
+    [System.Serializable]
     public class MaterialSkinSSS
     {
         public TextureInfo smoothTex = null;
