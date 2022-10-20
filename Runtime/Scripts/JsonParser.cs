@@ -56,12 +56,12 @@ namespace GLTFast {
                     // mat.extension is always set (not null), because JsonUtility constructs a default
                     // if any of mat.extension's members is not null, it is because there was
                     // a legit extensions node in JSON => we have to check which ones
-                    if (mat.extensions.KHR_materials_unlit != null) {
-                        check = true;
-                    } else {
-                        // otherwise dump the wrongfully constructed MaterialExtension
-                        mat.extensions = null;
-                    }
+                    //if (mat.extensions.KHR_materials_unlit != null) {
+                    //    check = true;
+                    //} else {
+                    //    // otherwise dump the wrongfully constructed MaterialExtension
+                    //    mat.extensions = null;
+                    //}
                 }
             }
             if(root.accessors != null) {

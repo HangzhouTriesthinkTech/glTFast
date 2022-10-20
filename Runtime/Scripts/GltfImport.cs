@@ -1484,6 +1484,10 @@ namespace GLTFast {
 
             if(gltfRoot.accessors!=null) {
                 success = await LoadAccessorData(gltfRoot);
+                if (!success)
+                {
+                    return false;
+                }
                 await deferAgent.BreakPoint();
 
                 while(!accessorJobsHandle.IsCompleted) {

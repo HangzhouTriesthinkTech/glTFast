@@ -256,6 +256,14 @@ namespace GLTFast {
                     jointsUInt16Job.result = output;
                     jobHandle = jointsUInt16Job.Schedule(count,GltfImport.DefaultBatchCount);
                     break;
+                case GLTFComponentType.UnsignedInt:
+                    var jointsUInt32Job = new Jobs.ConvertBoneJointsUInt32ToUInt32Job();
+                    jointsUInt32Job.inputByteStride = inputByteStride > 0 ? inputByteStride : 8;
+                    jointsUInt32Job.input = (byte*)input;
+                    jointsUInt32Job.outputByteStride = outputByteStride;
+                    jointsUInt32Job.result = output;
+                    jobHandle = jointsUInt32Job.Schedule(count, GltfImport.DefaultBatchCount);
+                    break;
                 default:
                     logger?.Error(LogCode.TypeUnsupported, "Joints", inputType.ToString());
                     jobHandle = null;

@@ -157,7 +157,7 @@ namespace GLTFast.Materials {
         protected static readonly int metallicRoughnessMapUVChannelPropId = Shader.PropertyToID("metallicRoughnessTexture_texCoord");
         protected static readonly int roughnessFactorPropId = Shader.PropertyToID("roughnessFactor");
         
-        static IMaterialGenerator defaultMaterialGenerator;
+        static IMaterialGenerator defaultMaterialGenerator = new CustomMaterialGenerator();
         
         static bool defaultMaterialGenerated;
         static UnityEngine.Material defaultMaterial;

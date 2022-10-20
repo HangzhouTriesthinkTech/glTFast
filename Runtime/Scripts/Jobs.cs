@@ -2105,7 +2105,33 @@ namespace GLTFast.Jobs {
             *resultV = new uint4(off[0],off[1],off[2],off[3]);
         }
     }
-    
+
+    [BurstCompile]
+    unsafe struct ConvertBoneJointsUInt32ToUInt32Job : IJobParallelFor
+    {
+
+        [ReadOnly]
+        [NativeDisableUnsafePtrRestriction]
+        public byte* input;
+
+        [ReadOnly]
+        public int inputByteStride;
+
+        [WriteOnly]
+        [NativeDisableUnsafePtrRestriction]
+        public uint4* result;
+
+        [ReadOnly]
+        public int outputByteStride;
+
+        public void Execute(int i)
+        {
+            var resultV = (uint4*)(((byte*)result) + (i * outputByteStride));
+            var off = (uint*)(input + (i * inputByteStride));
+            *resultV = new uint4(off[0], off[1], off[2], off[3]);
+        }
+    }
+
     [BurstCompile]
     struct SortAndRenormalizeBoneWeightsJob : IJobParallelFor {
 
