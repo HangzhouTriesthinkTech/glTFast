@@ -25,7 +25,9 @@ namespace GLTFast.Materials
         protected static readonly int k_SC = Shader.PropertyToID("_SC");
         protected static readonly int k_Mask = Shader.PropertyToID("_Mask");
 
-        protected const string CUSTOM_SHADER_PATH_PREFIX = "Scripts/Render/Shader/";
+#if UNITY_EDITOR
+        protected const string CUSTOM_SHADER_PATH_PREFIX = "Assets/Scripts/Render/Shader/";
+#endif
 
         public override Material GenerateMaterial(
             Schema.Material gltfMaterial,
@@ -237,6 +239,10 @@ namespace GLTFast.Materials
 #if UNITY_EDITOR
                 mat.doubleSidedGI = true;
 #endif
+            }
+            if (gltfMaterial.normalTexture != null)
+            {
+                CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_NormalTex);
             }
         }
     }
