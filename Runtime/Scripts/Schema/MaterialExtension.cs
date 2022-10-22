@@ -43,8 +43,9 @@ namespace GLTFast.Schema {
         public Sheen KHR_materials_sheen;
 
         public Character.MaterialEmpty VENDOR_materials_characterEmpty;
-
         public Character.MaterialSkinSSS VENDOR_materials_characterSkinSSS;
+        public Character.MaterialEye VENDOR_materials_characterEye;
+        public Character.MaterialEyelash VENDOR_materials_characterEyelash;
 
         // ReSharper restore InconsistentNaming
 
@@ -79,6 +80,16 @@ namespace GLTFast.Schema {
             {
                 writer.AddProperty("VENDOR_materials_characterSkinSSS");
                 VENDOR_materials_characterSkinSSS.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterEye != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterEye");
+                VENDOR_materials_characterEye.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterEyelash != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterEyelash");
+                VENDOR_materials_characterEyelash.GltfSerialize(writer);
             }
             writer.Close();
         }

@@ -24,6 +24,10 @@ namespace GLTFast.Export
         static readonly int k_SC = Shader.PropertyToID("_SC");
         static readonly int k_Mask = Shader.PropertyToID("_Mask");
 
+        static readonly int k_Normal = Shader.PropertyToID("_Normal");
+        static readonly int k_Specular = Shader.PropertyToID("_Specular");
+        static readonly int k_Alpha = Shader.PropertyToID("_Alpha");
+
         public override bool ConvertMaterial(UnityEngine.Material uMaterial, out Schema.Material material, IGltfWritable gltf, ICodeLogger logger)
         {
             material = new Material
@@ -47,6 +51,14 @@ namespace GLTFast.Export
                     {
                         return ConvertCharacterSkinSSSMaterial(uMaterial, material, gltf, logger);
                     }
+                case "Character/shader_eye":
+                    {
+                        return ConvertCharacterEyeMaterial(uMaterial, material, gltf, logger);
+                    }
+                case "Character/shader_eyelash":
+                    {
+                        return ConvertCharacterEyelashMaterial(uMaterial, material, gltf, logger);
+                    }
                 default:
                     {
                         // fallback to default;
@@ -55,17 +67,21 @@ namespace GLTFast.Export
             }
         }
 
-
         private bool ConvertGeneralMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
             material.doubleSided = IsDoubleSided(uMaterial);
             SetAlphaModeAndCutoff(uMaterial, material);
 
             if (
-                uMaterial.HasProperty(k_NormalTex)
+                uMaterial.HasProperty(k_NormalTex) ||
+                uMaterial.HasProperty(k_Normal)
             )
             {
                 var normalTex = uMaterial.GetTexture(k_NormalTex);
+                if (normalTex == null)
+                {
+                    normalTex = uMaterial.GetTexture(k_Normal);
+                }
 
                 if (normalTex != null)
                 {
@@ -152,6 +168,38 @@ namespace GLTFast.Export
                 return false;
             }
             material.extensions.VENDOR_materials_characterEmpty = new Character.MaterialEmpty();
+            return true;
+        }
+
+        private bool ConvertCharacterEyeMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
+        {
+            if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            if (!ConvertPbrMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            var eye = new Character.MaterialEye();
+            material.extensions.VENDOR_materials_characterEye = eye;
+            eye.specular = ExportAnyTexture(uMaterial, k_Specular, gltf);
+            return true;
+        }
+
+        private bool ConvertCharacterEyelashMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
+        {
+            if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            if (!ConvertPbrMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            var eye = new Character.MaterialEyelash();
+            material.extensions.VENDOR_materials_characterEyelash = eye;
+            eye.alpha = ExportAnyTexture(uMaterial, k_Alpha, gltf);
             return true;
         }
     }

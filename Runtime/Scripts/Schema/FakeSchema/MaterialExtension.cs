@@ -24,5 +24,7 @@ namespace GLTFast.FakeSchema {
         public string KHR_materials_sheen;
         public string VENDOR_materials_characterEmpty;
         public string VENDOR_materials_characterSkinSSS;
+        public string VENDOR_materials_characterEye;
+        public string VENDOR_materials_characterEyelash;
     }
 }

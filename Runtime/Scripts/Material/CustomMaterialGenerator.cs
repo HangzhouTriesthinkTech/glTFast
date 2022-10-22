@@ -25,6 +25,10 @@ namespace GLTFast.Materials
         protected static readonly int k_SC = Shader.PropertyToID("_SC");
         protected static readonly int k_Mask = Shader.PropertyToID("_Mask");
 
+        protected static readonly int k_Specular = Shader.PropertyToID("_Specular");
+        protected static readonly int k_Alpha = Shader.PropertyToID("_Alpha");
+        protected static readonly int k_Normal = Shader.PropertyToID("_Normal");
+
 #if UNITY_EDITOR
         protected const string CUSTOM_SHADER_PATH_PREFIX = "Assets/Scripts/Render/Shader/";
 #endif
@@ -43,6 +47,14 @@ namespace GLTFast.Materials
                 if (gltfMaterial.extensions.VENDOR_materials_characterSkinSSS != null)
                 {
                     return this.GenerateCharacterSkinSSSMaterial(gltfMaterial, gltf, pointsSupport);
+                }
+                if (gltfMaterial.extensions.VENDOR_materials_characterEye != null)
+                {
+                    return this.GenerateCharacterEyeMaterial(gltfMaterial, gltf, pointsSupport);
+                }
+                if (gltfMaterial.extensions.VENDOR_materials_characterEyelash != null)
+                {
+                    return this.GenerateCharacterEyelashMaterial(gltfMaterial, gltf, pointsSupport);
                 }
             }
             return base.GenerateMaterial(gltfMaterial, gltf, pointsSupport);
@@ -180,6 +192,7 @@ namespace GLTFast.Materials
             var mat = new Material(shader);
             this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
 
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_NormalTex);
             if (gltfMaterial.pbrMetallicRoughness != null)
             {
                 mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
@@ -231,6 +244,62 @@ namespace GLTFast.Materials
         }
 
 
+        private Material GenerateCharacterEyeMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>($"{CUSTOM_SHADER_PATH_PREFIX}Character/shader_eye.shader");
+#else
+            var shader = FindShader("Character/shader_eye");
+#endif
+            var mat = new Material(shader);
+            this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
+            CustomTrySetTexture(
+                gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                mat,
+                gltf,
+                k_MainTex
+            );
+            var eye = gltfMaterial.extensions.VENDOR_materials_characterEye;
+            CustomTrySetTexture(
+                eye.specular,
+                mat,
+                gltf,
+                k_Specular
+            );
+            return mat;
+        }
+
+        private Material GenerateCharacterEyelashMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>($"{CUSTOM_SHADER_PATH_PREFIX}Character/shader_eyelash.shader");
+#else
+            var shader = FindShader("Character/shader_eyelash");
+#endif
+            var mat = new Material(shader);
+            this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
+            CustomTrySetTexture(
+                gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                mat,
+                gltf,
+                k_MainTex
+            );
+            var eyelash = gltfMaterial.extensions.VENDOR_materials_characterEyelash;
+            CustomTrySetTexture(
+                eyelash.alpha,
+                mat,
+                gltf,
+                k_Alpha
+            );
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
+            }
+            return mat;
+        }
+
         private void GenerateGeneralMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, Material mat)
         {
             if (gltfMaterial.doubleSided)
@@ -240,11 +309,9 @@ namespace GLTFast.Materials
                 mat.doubleSidedGI = true;
 #endif
             }
-            if (gltfMaterial.normalTexture != null)
-            {
-                CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_NormalTex);
-            }
+
         }
+
     }
 
 }

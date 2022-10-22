@@ -144,6 +144,14 @@ namespace GLTFast {
                         {
                             mat.extensions.VENDOR_materials_characterSkinSSS = null;
                         }
+                        if (fake.VENDOR_materials_characterEye == null)
+                        {
+                            mat.extensions.VENDOR_materials_characterEye = null;
+                        }
+                        if (fake.VENDOR_materials_characterEyelash == null)
+                        {
+                            mat.extensions.VENDOR_materials_characterEyelash = null;
+                        }
                     }
                 }
 
