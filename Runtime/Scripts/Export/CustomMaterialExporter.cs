@@ -73,15 +73,10 @@ namespace GLTFast.Export
             SetAlphaModeAndCutoff(uMaterial, material);
 
             if (
-                uMaterial.HasProperty(k_NormalTex) ||
-                uMaterial.HasProperty(k_Normal)
+                uMaterial.HasProperty(k_NormalTex)
             )
             {
                 var normalTex = uMaterial.GetTexture(k_NormalTex);
-                if (normalTex == null)
-                {
-                    normalTex = uMaterial.GetTexture(k_Normal);
-                }
 
                 if (normalTex != null)
                 {
@@ -91,6 +86,26 @@ namespace GLTFast.Export
                         if (material.normalTexture != null)
                         {
                             ExportTextureTransform(material.normalTexture, uMaterial, k_NormalTex, gltf);
+                        }
+                    }
+                    else
+                    {
+                        logger?.Error(LogCode.TextureInvalidType, "normal", uMaterial.name);
+                        return false;
+                    }
+                }
+            } else if (uMaterial.HasProperty(k_Normal))
+            {
+                var normalTex = uMaterial.GetTexture(k_Normal);
+
+                if (normalTex != null)
+                {
+                    if (normalTex is Texture2D)
+                    {
+                        material.normalTexture = ExportNormalTextureInfo(normalTex, uMaterial, gltf);
+                        if (material.normalTexture != null)
+                        {
+                            ExportTextureTransform(material.normalTexture, uMaterial, k_Normal, gltf);
                         }
                     }
                     else
