@@ -40,6 +40,7 @@ namespace GLTFast.Export {
             quaternion? rotation = null,
             float3? scale = null,
             uint[] children = null,
+            GameObject gameObject = null,
             string name = null
         );
 

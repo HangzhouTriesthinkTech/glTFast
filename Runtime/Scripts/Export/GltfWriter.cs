@@ -95,6 +95,7 @@ namespace GLTFast.Export {
         
         List<Scene> m_Scenes;
         List<Node> m_Nodes;
+        List<GameObject> m_GameObjects;
         List<Mesh> m_Meshes;
         List<Material> m_Materials;
         List<Texture> m_Textures;
@@ -109,6 +110,8 @@ namespace GLTFast.Export {
         List<SamplerKey> m_SamplerKeys;
         List<UnityEngine.Material> m_UnityMaterials;
         List<UnityEngine.Mesh> m_UnityMeshes;
+        List<Skin> m_Skins;
+        List<UnityEngine.SkinnedMeshRenderer> m_SkinMeshes;
         Dictionary<int, int[]> m_NodeMaterials;
 
         Stream m_BufferStream;
@@ -142,6 +145,7 @@ namespace GLTFast.Export {
             quaternion? rotation = null,
             float3? scale = null,
             uint[] children = null,
+            GameObject gameObject = null,
             string name = null
         )
         {
@@ -151,6 +155,8 @@ namespace GLTFast.Export {
             node.children = children;
             m_Nodes = m_Nodes ?? new List<Node>();
             m_Nodes.Add(node);
+            m_GameObjects = m_GameObjects ?? new List<GameObject>();
+            m_GameObjects.Add(gameObject);
             return (uint) m_Nodes.Count - 1;
         }
         
@@ -165,6 +171,22 @@ namespace GLTFast.Export {
             }
 
             node.mesh = AddMesh(uMesh);
+        }
+
+        public void AddSkinToNode(int nodeId, UnityEngine.SkinnedMeshRenderer smr)
+        {
+            CertifyNotDisposed();
+            var node = m_Nodes[nodeId];
+            node.skin = AddSkin(smr);
+        }
+
+        public int AddSkin(UnityEngine.SkinnedMeshRenderer smr)
+        {
+            m_Skins = m_Skins ?? new List<Skin>();
+            this.m_Skins.Add(new Skin());
+            m_SkinMeshes = m_SkinMeshes ?? new List<UnityEngine.SkinnedMeshRenderer>();
+            this.m_SkinMeshes.Add(smr);
+            return m_Skins.Count - 1;
         }
 
         /// <inheritdoc />
@@ -635,6 +657,7 @@ namespace GLTFast.Export {
 #endif
         }
 
+
         async Task<bool> Bake(string bufferPath, string directory) {
             if (m_Meshes != null) {
 #if GLTFAST_MESH_DATA
@@ -643,6 +666,11 @@ namespace GLTFast.Export {
                 await BakeMeshesLegacy();
 #endif
             }
+            if (m_Skins != null)
+            {
+                await BakeSkins();
+            }
+
 
             AssignMaterialsToMeshes();
 
@@ -669,6 +697,7 @@ namespace GLTFast.Export {
             m_Gltf.textures = m_Textures?.ToArray();
             m_Gltf.samplers = m_Samplers?.ToArray();
             m_Gltf.cameras = m_Cameras?.ToArray();
+            m_Gltf.skins = m_Skins?.ToArray();
 
             if (m_Lights != null && m_Lights.Count > 0) {
                 RegisterExtensionUsage(Extension.LightsPunctual);
@@ -767,6 +796,77 @@ namespace GLTFast.Export {
         }
 
 #if GLTFAST_MESH_DATA
+
+        unsafe void GetMatricsJob(NativeArray<Matrix4x4> na, NativeArray<float4x4> dest, out JobHandle jobHandle)
+        {
+            jobHandle = new ExportJobs.ConvertMatricesJob
+            {
+                input = (float4x4*)na.GetUnsafeReadOnlyPtr(),
+                result = (float4x4*)dest.GetUnsafePtr()
+            }.Schedule(na.Length, k_DefaultInnerLoopBatchCount);
+        }
+        async Task BakeSkin(int skinId, IDictionary<GameObject, int> objMap)
+        {
+            var smr = m_SkinMeshes[skinId];
+            var skin = m_Skins[skinId];
+            if (smr != null)
+            {
+                // TODO: generate matrix buffer.
+                var matrixes = smr.sharedMesh.bindposes;
+
+                if (matrixes.Length > 0)
+                {
+                    var na = new NativeArray<Matrix4x4>(matrixes.Length, Allocator.TempJob);
+                    var dest = new NativeArray<float4x4>(matrixes.Length, Allocator.TempJob);
+                    na.CopyFrom(matrixes);
+                    Accessor accesor = new Accessor
+                    {
+                        typeEnum = GLTFAccessorAttributeType.MAT4,
+                        byteOffset = 0,
+                        componentType = GLTFComponentType.Float,
+                        count = matrixes.Length,
+                    };
+
+                    GetMatricsJob(na, dest, out var job);
+
+                    while (!job.IsCompleted)
+                    {
+                        await Task.Yield();
+                    }
+                    Profiler.BeginSample("IndexJobUInt16QuadsPostWork");
+                    job.Complete(); // TODO: Wait until thread is finished
+                    accesor.bufferView = WriteBufferViewToBuffer(dest.Reinterpret<byte>(sizeof(float) * 16));
+                    skin.inverseBindMatrices = AddAccessor(accesor);
+                    na.Dispose();
+                    dest.Dispose();
+                }
+
+                objMap.TryGetValue(smr.rootBone.gameObject, out skin.skeleton);
+
+                skin.joints = new int[smr.bones.Length];
+                for (int i = 0; i < skin.joints.Length; i++)
+                {
+                    objMap.TryGetValue(smr.bones[i].gameObject, out skin.joints[i]);
+                }
+            }
+        }
+
+        async Task BakeSkins()
+        {
+            IDictionary<GameObject, int> objMap = new Dictionary<GameObject, int>();
+            for (var nodeId = 0; nodeId < m_GameObjects.Count; nodeId++)
+            {
+                var gameObj = m_GameObjects[nodeId];
+                if (gameObj != null)
+                {
+                    objMap.Add(gameObj, nodeId);
+                }
+            }
+            for (var skinId = 0; skinId < m_Skins.Count; skinId++)
+            {
+                await BakeSkin(skinId, objMap);
+            }
+        }
 
         async Task BakeMeshes() {
             Profiler.BeginSample("AcquireReadOnlyMeshData");

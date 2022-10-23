@@ -1970,7 +1970,11 @@ namespace GLTFast {
                                 if (skin.skeleton >= 0) {
                                     rootJoint = (uint) skin.skeleton;
                                 }
-                                joints = skin.joints;
+                                joints = new uint[skin.joints.Length];
+                                for (int idx = 0; idx < joints.Length; idx++)
+                                {
+                                    joints[idx] = (uint)(skin.joints[idx]);
+                                }
                             } else {
                                 logger?.Warning(LogCode.SkinMissing);
                             }
@@ -2084,7 +2088,7 @@ namespace GLTFast {
         /// <param name="nodes">Set of nodes</param>
         /// <param name="parentIndex">Dictionary of nodes' parent indices</param>
         /// <returns>Lowest common ancestor node of all provided nodes. -1 if it was not found</returns>
-        static int GetLowestCommonAncestorNode(IEnumerable<uint> nodes, IReadOnlyList<int> parentIndex) {
+        static int GetLowestCommonAncestorNode(IEnumerable<int> nodes, IReadOnlyList<int> parentIndex) {
 
             List<int> chain = null;
             var commonAncestor = -1;

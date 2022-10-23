@@ -148,6 +148,7 @@ namespace GLTFast.Export {
                 transform.localRotation,
                 transform.localScale,
                 children,
+                gameObject,
                 gameObject.name
                 );
             Mesh mesh = null;
@@ -163,6 +164,8 @@ namespace GLTFast.Export {
             if (gameObject.TryGetComponent(out SkinnedMeshRenderer smr)) {
                 mesh = smr.sharedMesh;
                 smr.GetSharedMaterials(tempMaterials);
+
+                m_Writer.AddSkinToNode(nodeId, smr);
             }
 
             var materialIds = new int[tempMaterials.Count];

@@ -107,5 +107,38 @@ namespace GLTFast.Export {
                 *outPtr = tmp;
             }
         }
+
+        [BurstCompile]
+        public unsafe struct ConvertMatricesJob : IJobParallelFor
+        {
+
+            [ReadOnly]
+            [NativeDisableUnsafePtrRestriction]
+            public float4x4* input;
+
+            [WriteOnly]
+            [NativeDisableUnsafePtrRestriction]
+            public float4x4* result;
+
+            public void Execute(int i)
+            {
+                var tmp = input[i].c0;
+                tmp.y *= -1;
+                tmp.z *= -1;
+                result[i].c0 = tmp;
+
+                tmp = input[i].c1;
+                tmp.x *= -1;
+                result[i].c1 = tmp;
+
+                tmp = input[i].c2;
+                tmp.x *= -1;
+                result[i].c2 = tmp;
+
+                tmp = input[i].c3;
+                tmp.x *= -1;
+                result[i].c3 = tmp;
+            }
+        }
     }
 }

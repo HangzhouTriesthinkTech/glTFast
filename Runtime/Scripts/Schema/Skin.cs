@@ -35,13 +35,24 @@ namespace GLTFast.Schema {
         /// <summary>
         /// Indices of skeleton nodes, used as joints in this skin.
         /// </summary>
-        public uint[] joints;
+        public int[] joints;
         
         internal void GltfSerialize(JsonWriter writer) {
             writer.AddObject();
             GltfSerializeRoot(writer);
+            if (inverseBindMatrices >= 0)
+            {
+                writer.AddProperty("inverseBindMatrices", inverseBindMatrices);
+            }
+            if (skeleton >= 0)
+            {
+                writer.AddProperty("skeleton", skeleton);
+            }
+            if (joints != null && joints.Length > 0)
+            {
+                writer.AddArrayProperty("joints", joints);
+            }
             writer.Close();
-            throw new System.NotImplementedException($"GltfSerialize missing on {GetType()}");
         }
     }
 }
