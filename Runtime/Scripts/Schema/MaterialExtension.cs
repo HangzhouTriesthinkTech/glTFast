@@ -14,6 +14,7 @@
 //
 
 using Character = GLTFast.Schema.CustomMaterials.Character;
+using Cloth = GLTFast.Schema.CustomMaterials.Cloth;
 
 namespace GLTFast.Schema {
 
@@ -46,6 +47,10 @@ namespace GLTFast.Schema {
         public Character.MaterialSkinSSS VENDOR_materials_characterSkinSSS;
         public Character.MaterialEye VENDOR_materials_characterEye;
         public Character.MaterialEyelash VENDOR_materials_characterEyelash;
+        public Character.MaterialCornea VENDOR_materials_characterCornea;
+        public Character.MaterialHairTransparent VENDOR_materials_characterHairTransparent;
+        public Cloth.MaterialCommon VENDOR_materials_clothCommon;
+
 
         // ReSharper restore InconsistentNaming
 
@@ -90,6 +95,21 @@ namespace GLTFast.Schema {
             {
                 writer.AddProperty("VENDOR_materials_characterEyelash");
                 VENDOR_materials_characterEyelash.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterCornea != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterCornea");
+                VENDOR_materials_characterCornea.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterHairTransparent != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterHairTransparent");
+                VENDOR_materials_characterHairTransparent.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_clothCommon != null)
+            {
+                writer.AddProperty("VENDOR_materials_clothCommon");
+                VENDOR_materials_clothCommon.GltfSerialize(writer);
             }
             writer.Close();
         }

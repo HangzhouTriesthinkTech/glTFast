@@ -1,6 +1,7 @@
 using GLTFast.Logging;
 using UnityEngine;
 using Character = GLTFast.Schema.CustomMaterials.Character;
+using Cloth = GLTFast.Schema.CustomMaterials.Cloth;
 
 namespace GLTFast.Export
 {
@@ -27,6 +28,21 @@ namespace GLTFast.Export
         static readonly int k_Normal = Shader.PropertyToID("_Normal");
         static readonly int k_Specular = Shader.PropertyToID("_Specular");
         static readonly int k_Alpha = Shader.PropertyToID("_Alpha");
+
+        static readonly int k_SpecularPower = Shader.PropertyToID("_SpecularPower");
+        static readonly int k_SpecularScale = Shader.PropertyToID("_SpecularScale");
+
+        static readonly int k_CutOff = Shader.PropertyToID("_CutOff");
+        static readonly int k_AnisoMap = Shader.PropertyToID("_AnisoMap");
+        static readonly int k_SpecularAdjust = Shader.PropertyToID("_SpecularAdjust");
+
+        static readonly int k_AOTex = Shader.PropertyToID("_AOTex");
+        static readonly int k_FabricTex = Shader.PropertyToID("_FabricTex");
+        static readonly int k_FabricNormal = Shader.PropertyToID("_FabricNormal");
+        static readonly int k_FabricRoughness = Shader.PropertyToID("_FabricRoughness");
+        static readonly int k_NormalIntensity = Shader.PropertyToID("_NormalIntensity");
+        static readonly int k_RoughnessAdjust = Shader.PropertyToID("_RoughnessAdjust");
+        static readonly int k_OcclusionAdjust = Shader.PropertyToID("_OcclusionAdjust");
 
         public override bool ConvertMaterial(UnityEngine.Material uMaterial, out Schema.Material material, IGltfWritable gltf, ICodeLogger logger)
         {
@@ -58,6 +74,22 @@ namespace GLTFast.Export
                 case "Character/shader_eyelash":
                     {
                         return ConvertCharacterEyelashMaterial(uMaterial, material, gltf, logger);
+                    }
+                case "Character/shader_cornea":
+                    {
+                        return ConvertCharacterCorneaMaterial(uMaterial, material, gltf, logger);
+                    }
+                case "Character/shader_hair_transparent":
+                    {
+                        return ConvertCharacterHairTransparentMaterial(uMaterial, material, gltf, logger);
+                    }
+                case "Cloth/shader_cloth_common":
+                    {
+                        return ConvertClothCommonMaterial(uMaterial, material, gltf, logger, true);
+                    }
+                case "Cloth/shader_cloth_common_single_side":
+                    {
+                        return ConvertClothCommonMaterial(uMaterial, material, gltf, logger, false);
                     }
                 default:
                     {
@@ -119,7 +151,7 @@ namespace GLTFast.Export
             return true;
         }
 
-        TextureInfo ExportAnyTexture(UnityEngine.Material uMaterial, int kId, IGltfWritable gltf)
+        static TextureInfo ExportAnyTexture(UnityEngine.Material uMaterial, int kId, IGltfWritable gltf)
         {
             var texture = uMaterial.GetTexture(kId);
             if (texture == null)
@@ -133,6 +165,29 @@ namespace GLTFast.Export
             }
 
             return ret;
+        }
+
+        static OcclusionTextureInfo ExportOcclusionTextureInfo(
+            UnityEngine.Material material,
+            int kId,
+            IGltfWritable gltf
+        )
+        {
+            var texture2d = material.GetTexture(kId) as Texture2D;
+            if (texture2d == null)
+            {
+                return null;
+            }
+            var imageExport = new ImageExport(texture2d);
+            if (AddImageExport(gltf, imageExport, out var textureId))
+            {
+                return new OcclusionTextureInfo
+                {
+                    index = textureId,
+                    strength = material.GetFloat(k_OcclusionAdjust)
+                };
+            }
+            return null;
         }
 
         private bool ConvertPbrMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
@@ -216,6 +271,117 @@ namespace GLTFast.Export
             material.extensions.VENDOR_materials_characterEyelash = eye;
             eye.alpha = ExportAnyTexture(uMaterial, k_Alpha, gltf);
             return true;
+        }
+
+        private bool ConvertCharacterCorneaMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
+        {
+            if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            if (!ConvertPbrMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            var ext = new Character.MaterialCornea();
+            material.extensions.VENDOR_materials_characterCornea = ext;
+            ext.specularPower = uMaterial.GetFloat(k_SpecularPower);
+            ext.specularScale = uMaterial.GetFloat(k_SpecularScale);
+            return true;
+        }
+
+        private bool ConvertCharacterHairTransparentMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
+        {
+            if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            if (!ConvertPbrMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            var ext = new Character.MaterialHairTransparent();
+            material.extensions.VENDOR_materials_characterHairTransparent = ext;
+            ext.alpha = ExportAnyTexture(uMaterial, k_Alpha, gltf);
+            ext.cutOff = uMaterial.GetFloat(k_CutOff);
+            ext.anisoMap = ExportAnyTexture(uMaterial, k_AnisoMap, gltf);
+            ext.specularAdjust = uMaterial.GetFloat(k_SpecularAdjust);
+            return true;
+        }
+
+        new static NormalTextureInfo ExportNormalTextureInfo(
+            UnityEngine.Texture texture,
+            UnityEngine.Material material,
+            IGltfWritable gltf
+        )
+        {
+            var texture2d = texture as Texture2D;
+            if (texture2d == null)
+            {
+                return null;
+            }
+            var imageExport = new NormalImageExport(texture2d);
+            if (AddImageExport(gltf, imageExport, out var textureId))
+            {
+                var info = new NormalTextureInfo
+                {
+                    index = textureId,
+                    // texCoord = 0 // TODO: figure out which UV set was used
+                };
+
+                if (material.HasProperty(k_NormalIntensity))
+                {
+                    info.scale = material.GetFloat(k_NormalIntensity);
+                }
+                return info;
+            }
+            return null;
+        }
+
+        private bool ConvertClothCommonMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger, bool doubleSided)
+        {
+            material.occlusionTexture = ExportOcclusionTextureInfo(uMaterial, k_AOTex, gltf);
+
+            if (
+                uMaterial.HasProperty(k_FabricNormal)
+            )
+            {
+                var normalTex = uMaterial.GetTexture(k_FabricNormal);
+
+                if (normalTex != null)
+                {
+                    if (normalTex is Texture2D)
+                    {
+                        material.normalTexture = ExportNormalTextureInfo(normalTex, uMaterial, gltf);
+                        if (material.normalTexture != null)
+                        {
+                            ExportTextureTransform(material.normalTexture, uMaterial, k_NormalTex, gltf);
+                        }
+                    }
+                    else
+                    {
+                        logger?.Error(LogCode.TextureInvalidType, "normal", uMaterial.name);
+                        return false;
+                    }
+                }
+            }
+
+            var pbr = new PbrMetallicRoughness { metallicFactor = 0, roughnessFactor = 1.0f };
+            material.pbrMetallicRoughness = pbr;
+
+            if (uMaterial.HasProperty(k_Color))
+            {
+                pbr.baseColor = uMaterial.GetColor(k_Color);
+            }
+            material.pbrMetallicRoughness.baseColorTexture = ExportAnyTexture(uMaterial, k_FabricTex, gltf);
+            pbr.roughnessFactor = uMaterial.GetFloat(k_RoughnessAdjust);
+            pbr.metallicRoughnessTexture = ExportAnyTexture(uMaterial, k_FabricRoughness, gltf);
+
+            var ext = new Cloth.MaterialCommon();
+            material.extensions.VENDOR_materials_clothCommon = ext;
+
+            material.doubleSided = doubleSided;
+            return true;;
         }
     }
 }

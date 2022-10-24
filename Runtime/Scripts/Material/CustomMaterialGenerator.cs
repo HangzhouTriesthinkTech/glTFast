@@ -29,6 +29,22 @@ namespace GLTFast.Materials
         protected static readonly int k_Alpha = Shader.PropertyToID("_Alpha");
         protected static readonly int k_Normal = Shader.PropertyToID("_Normal");
 
+        protected static readonly int k_SpecularPower = Shader.PropertyToID("_SpecularPower");
+        protected static readonly int k_SpecularScale = Shader.PropertyToID("_SpecularScale");
+
+        protected static readonly int k_CutOff = Shader.PropertyToID("_CutOff");
+        protected static readonly int k_AnisoMap = Shader.PropertyToID("_AnisoMap");
+        protected static readonly int k_SpecularAdjust = Shader.PropertyToID("_SpecularAdjust");
+
+
+        protected static readonly int k_AOTex = Shader.PropertyToID("_AOTex");
+        protected static readonly int k_FabricTex = Shader.PropertyToID("_FabricTex");
+        protected static readonly int k_FabricNormal = Shader.PropertyToID("_FabricNormal");
+        protected static readonly int k_FabricRoughness = Shader.PropertyToID("_FabricRoughness");
+        protected static readonly int k_NormalIntensity = Shader.PropertyToID("_NormalIntensity");
+        protected static readonly int k_RoughnessAdjust = Shader.PropertyToID("_RoughnessAdjust");
+        protected static readonly int k_OcclusionAdjust = Shader.PropertyToID("_OcclusionAdjust");
+
 #if UNITY_EDITOR
         protected const string CUSTOM_SHADER_PATH_PREFIX = "Assets/Scripts/Render/Shader/";
 #endif
@@ -55,6 +71,18 @@ namespace GLTFast.Materials
                 if (gltfMaterial.extensions.VENDOR_materials_characterEyelash != null)
                 {
                     return this.GenerateCharacterEyelashMaterial(gltfMaterial, gltf, pointsSupport);
+                }
+                if (gltfMaterial.extensions.VENDOR_materials_characterCornea != null)
+                {
+                    return this.GenerateCharacterCorneaMaterial(gltfMaterial, gltf, pointsSupport);
+                }
+                if (gltfMaterial.extensions.VENDOR_materials_characterHairTransparent != null)
+                {
+                    return this.GenerateCharacterHairTransparentMaterial(gltfMaterial, gltf, pointsSupport);
+                }
+                if (gltfMaterial.extensions.VENDOR_materials_clothCommon != null)
+                {
+                    return this.GenerateClothCommonMaterial(gltfMaterial, gltf, pointsSupport);
                 }
             }
             return base.GenerateMaterial(gltfMaterial, gltf, pointsSupport);
@@ -196,13 +224,13 @@ namespace GLTFast.Materials
             if (gltfMaterial.pbrMetallicRoughness != null)
             {
                 mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
+                CustomTrySetTexture(
+                            gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                            mat,
+                            gltf,
+                            k_MainTex
+                            );
             }
-            CustomTrySetTexture(
-                        gltfMaterial.pbrMetallicRoughness.baseColorTexture,
-                        mat,
-                        gltf,
-                        k_MainTex
-                        );
             var sss = gltfMaterial.extensions.VENDOR_materials_characterSkinSSS;
             CustomTrySetTexture(
                     sss.smoothTex,
@@ -254,12 +282,16 @@ namespace GLTFast.Materials
             var mat = new Material(shader);
             this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
             CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
-            CustomTrySetTexture(
-                gltfMaterial.pbrMetallicRoughness.baseColorTexture,
-                mat,
-                gltf,
-                k_MainTex
-            );
+
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                    mat,
+                    gltf,
+                    k_MainTex
+                );
+            }
             var eye = gltfMaterial.extensions.VENDOR_materials_characterEye;
             CustomTrySetTexture(
                 eye.specular,
@@ -280,12 +312,15 @@ namespace GLTFast.Materials
             var mat = new Material(shader);
             this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
             CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
-            CustomTrySetTexture(
-                gltfMaterial.pbrMetallicRoughness.baseColorTexture,
-                mat,
-                gltf,
-                k_MainTex
-            );
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                    mat,
+                    gltf,
+                    k_MainTex
+                );
+            }
             var eyelash = gltfMaterial.extensions.VENDOR_materials_characterEyelash;
             CustomTrySetTexture(
                 eyelash.alpha,
@@ -312,6 +347,112 @@ namespace GLTFast.Materials
 
         }
 
+        private Material GenerateCharacterCorneaMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>($"{CUSTOM_SHADER_PATH_PREFIX}Character/shader_cornea.shader");
+#else
+            var shader = FindShader("Character/shader_cornea");
+#endif
+            var mat = new Material(shader);
+            this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
+            CustomTrySetTexture(
+                gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                mat,
+                gltf,
+                k_MainTex
+            );
+            var cornea = gltfMaterial.extensions.VENDOR_materials_characterCornea;
+            mat.SetFloat(k_SpecularPower, cornea.specularPower);
+            mat.SetFloat(k_SpecularScale, cornea.specularScale);
+            return mat;
+        }
+
+
+        private Material GenerateCharacterHairTransparentMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>($"{CUSTOM_SHADER_PATH_PREFIX}Character/shader_hair_transparent.shader");
+#else
+            var shader = FindShader("Character/shader_hair_transparent");
+#endif
+            var mat = new Material(shader);
+            this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                    mat,
+                    gltf,
+                    k_MainTex
+                );
+            }
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
+            var ext = gltfMaterial.extensions.VENDOR_materials_characterHairTransparent;
+
+            CustomTrySetTexture(
+                ext.alpha,
+                mat,
+                gltf,
+                k_Alpha
+            );
+            CustomTrySetTexture(
+               ext.anisoMap,
+               mat,
+               gltf,
+               k_AnisoMap
+            );
+            mat.SetFloat(k_CutOff, ext.cutOff);
+            mat.SetFloat(k_SpecularAdjust, ext.specularAdjust);
+            return mat;
+        }
+
+        private Material GenerateClothCommonMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(
+                gltfMaterial.doubleSided ? 
+                $"{CUSTOM_SHADER_PATH_PREFIX}Cloth/shader_cloth_common.shader" :
+                $"{CUSTOM_SHADER_PATH_PREFIX}Cloth/shader_cloth_common_single_side.shader"
+                );
+#else
+            var shader = FindShader(gltfMaterial.doubleSided ?  "Cloth/shader_cloth_common": "Cloth/shader_cloth_common_single_side.shader");
+#endif
+            var mat = new Material(shader);
+            CustomTrySetTexture(
+                gltfMaterial.occlusionTexture,
+                mat,
+                gltf,
+                k_AOTex
+            );
+            if (gltfMaterial.occlusionTexture != null)
+            {
+                mat.SetFloat(k_OcclusionAdjust, gltfMaterial.occlusionTexture.strength);
+            }
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                    mat,
+                    gltf,
+                    k_FabricTex
+                );
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.metallicRoughnessTexture,
+                    mat,
+                    gltf, k_FabricRoughness);
+                mat.SetFloat(k_RoughnessAdjust, gltfMaterial.pbrMetallicRoughness.roughnessFactor);
+            }
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_FabricNormal);
+            if (gltfMaterial.normalTexture != null)
+            {
+                mat.SetFloat(k_NormalIntensity, gltfMaterial.normalTexture.scale);
+            }
+            mat.doubleSidedGI = gltfMaterial.doubleSided;
+            return mat;
+        }
     }
 
 }
