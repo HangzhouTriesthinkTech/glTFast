@@ -114,7 +114,8 @@ namespace GLTFast.Schema {
                 }
                 if (b.targets!=null && targets.Length == b.targets.Length) {
                     for (var i = 0; i < targets.Length; i++) {
-                        if (!targets[i].Equals(b.targets[i])) return false;
+                        if (!targets[i].Equals(b.targets[i])) 
+                            return false;
                     }
                     return true;
                 }
@@ -132,7 +133,11 @@ namespace GLTFast.Schema {
             int hash = 13;
             hash = hash * 7 + attributes.GetHashCode();
             if (targets != null) {
-                hash = hash * 7 + targets.GetHashCode();
+                hash = hash * 7 + targets.Length.GetHashCode();
+                foreach (var v in targets)
+                {
+                    hash = hash * 7 + v.GetHashCode();
+                }
             }
             return hash;
         }
@@ -358,9 +363,11 @@ namespace GLTFast.Schema {
         }
 
         internal void GltfSerialize(JsonWriter writer) {
+            writer.AddObject();
             if( POSITION >= 0 ) writer.AddProperty("POSITION", POSITION);
             if( NORMAL >= 0 ) writer.AddProperty("NORMAL", NORMAL);
             if( TANGENT >= 0 ) writer.AddProperty("TANGENT", TANGENT);
+            writer.Close();
         }
     }
 }

@@ -874,9 +874,78 @@ namespace GLTFast.Export {
             Profiler.EndSample();
             for (var meshId = 0; meshId < m_Meshes.Count; meshId++) {
                 await BakeMesh(meshId, meshDataArray[meshId]);
+                await BakeMeshBlendShapes(meshId, meshDataArray[meshId]);
                 await m_DeferAgent.BreakPoint();
             }
             meshDataArray.Dispose();
+        }
+
+        private int AddBlendShapeAttributeAccessor(Vector3[] data, NativeArray<Vector3> result, int vertexCount)
+        {
+            for (int j = 0; j < vertexCount; j++)
+            {
+                result[j] = data[j];
+            }
+            int bufferViewId = WriteBufferViewToBuffer(
+                        result.Reinterpret<byte>(sizeof(float) * 3),
+                        byteStride: sizeof(float) * 3,
+                        byteAlignment: sizeof(float)
+                        );
+            var accessor = new Accessor
+            {
+                byteOffset = 0,
+                componentType = GLTFComponentType.Float,
+                count = vertexCount,
+                typeEnum = GLTFAccessorAttributeType.VEC3,
+                bufferView = bufferViewId
+            };
+
+            return AddAccessor(accessor);
+        }
+
+        async Task BakeMeshBlendShapes(int meshId, UnityEngine.Mesh.MeshData meshData)
+        {
+            var mesh = m_Meshes[meshId];
+            var uMesh = m_UnityMeshes[meshId];
+
+            var blendShapeCount = uMesh.blendShapeCount;
+            if (blendShapeCount == 0)
+            {
+                return;
+            }
+            mesh.extras = new MeshExtras { targetNames = new string[blendShapeCount] };
+            mesh.weights = new float[blendShapeCount];
+            foreach (var p in mesh.primitives)
+            {
+                p.targets = new MorphTarget[blendShapeCount];
+            }
+            var vertexCount = uMesh.vertexCount;
+            Vector3[] deltaVertices = new Vector3[vertexCount];
+            Vector3[] deltaNormals = new Vector3[vertexCount];
+            Vector3[] deltaTangent = new Vector3[vertexCount];
+            var result = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
+
+
+            for (int i = 0;i < blendShapeCount; i++)
+            {
+                mesh.extras.targetNames[i] = uMesh.GetBlendShapeName(i);
+                mesh.weights[i] = 0.0f;
+                uMesh.GetBlendShapeFrameVertices(i, 0, deltaVertices, deltaNormals, deltaTangent);
+
+                var target = new MorphTarget
+                {
+                    POSITION = AddBlendShapeAttributeAccessor(deltaVertices, result, vertexCount),
+                    NORMAL = AddBlendShapeAttributeAccessor(deltaNormals, result, vertexCount),
+                    TANGENT = AddBlendShapeAttributeAccessor(deltaTangent, result, vertexCount)
+                };
+
+                foreach (var p in mesh.primitives)
+                {
+                    p.targets[i] = target;
+                }
+            }
+
+            result.Dispose();
         }
 
         async Task BakeMesh(int meshId, UnityEngine.Mesh.MeshData meshData) {

@@ -140,5 +140,33 @@ namespace GLTFast.Export {
                 result[i].c3 = tmp;
             }
         }
+
+        [BurstCompile]
+        public unsafe struct ConvertBlendShapeJob : IJobParallelFor
+        {
+
+            [ReadOnly]
+            [NativeDisableUnsafePtrRestriction]
+            public Vector3* deltaVertices;
+
+            [ReadOnly]
+            [NativeDisableUnsafePtrRestriction]
+            public Vector3* deltaNormals;
+
+            [ReadOnly]
+            [NativeDisableUnsafePtrRestriction]
+            public Vector3* deltaTangent;
+
+            [WriteOnly]
+            [NativeDisableUnsafePtrRestriction]
+            public float3x3* result;
+
+            public void Execute(int i)
+            {
+                result[i].c0 = deltaVertices[i];
+                result[i].c1 = deltaNormals[i];
+                result[i].c2 = deltaTangent[i];
+            }
+        }
     }
 }

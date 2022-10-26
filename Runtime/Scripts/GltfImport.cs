@@ -2320,6 +2320,26 @@ namespace GLTFast {
                         cluster[primitive] = new List<MeshPrimitive>();
                     }
                     cluster[primitive].Add(primitive);
+#if DRACO_UNITY
+                    var isDraco = primitive.isDracoCompressed;
+                    if (isDraco) {
+                        continue;
+                    }
+#else
+                    var isDraco = false;
+#endif
+
+                    if (primitive.indices>=0) {
+                        var usage = (
+                            primitive.mode == DrawMode.Triangles
+                            || primitive.mode == DrawMode.TriangleStrip
+                            || primitive.mode == DrawMode.TriangleFan
+                            )
+                        ? AccessorUsage.IndexFlipped
+                        : AccessorUsage.Index;
+                        SetAccessorUsage(primitive.indices, isDraco ? AccessorUsage.Ignore : usage );
+                    }
+
                     
                     if (primitive.targets != null) {
                         if (morphTargetsContexts == null) {
@@ -2331,25 +2351,8 @@ namespace GLTFast {
                         var morphTargetsContext = CreateMorphTargetsContext(primitive,mesh.extras?.targetNames);
                         morphTargetsContexts[primitive] = morphTargetsContext;
                     }
-#if DRACO_UNITY
-                    var isDraco = primitive.isDracoCompressed;
-                    if (isDraco) {
-                        continue;
-                    }
-#else
-                    var isDraco = false;
-#endif
+
                     var att = primitive.attributes;
-                    if(primitive.indices>=0) {
-                        var usage = (
-                            primitive.mode == DrawMode.Triangles
-                            || primitive.mode == DrawMode.TriangleStrip
-                            || primitive.mode == DrawMode.TriangleFan
-                            )
-                        ? AccessorUsage.IndexFlipped
-                        : AccessorUsage.Index;
-                        SetAccessorUsage(primitive.indices, isDraco ? AccessorUsage.Ignore : usage );
-                    }
 
                     if(!mainBufferTypes.TryGetValue(primitive,out var mainBufferType)) {
                         if(att.TANGENT>=0) {
@@ -2841,6 +2844,7 @@ namespace GLTFast {
 
             if(primitive.indices >= 0) {
                 c.indices[submeshIndex] = (accessorData[primitive.indices] as AccessorData<int>).data;
+
             } else {
                 int vertexCount = gltf.accessors[primitive.attributes.POSITION].count;
                 JobHandle? jh;

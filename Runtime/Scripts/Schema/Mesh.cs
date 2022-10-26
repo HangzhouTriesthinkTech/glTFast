@@ -73,7 +73,6 @@ namespace GLTFast.Schema {
             if (extras != null) {
                 writer.AddProperty("extras");
                 extras.GltfSerialize(writer);
-                writer.Close();
             }
             writer.Close();
         }
@@ -91,9 +90,11 @@ namespace GLTFast.Schema {
         public string[] targetNames;
 
         internal void GltfSerialize(JsonWriter writer) {
+            writer.AddObject();
             if (targetNames != null) {
                 writer.AddArrayProperty("targetNames", targetNames);
             }
+            writer.Close();
         }
     }
 }
