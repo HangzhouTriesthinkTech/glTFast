@@ -392,7 +392,6 @@ namespace GLTFast.Schema {
             if (sparse != null) {
                 writer.AddProperty("sparse");
                 sparse.GltfSerialize(writer);
-                writer.Close();
             }
             writer.Close();
         }

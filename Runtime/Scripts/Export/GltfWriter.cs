@@ -880,14 +880,10 @@ namespace GLTFast.Export {
             meshDataArray.Dispose();
         }
 
-        private int AddBlendShapeAttributeAccessor(Vector3[] data, NativeArray<Vector3> result, int vertexCount)
+        private int AddBlendShapeAttributeAccessor(NativeArray<Vector3> result, int vertexCount, int rCount, int idxBid)
         {
-            for (int j = 0; j < vertexCount; j++)
-            {
-                result[j] = data[j];
-            }
             int bufferViewId = WriteBufferViewToBuffer(
-                        result.Reinterpret<byte>(sizeof(float) * 3),
+                        result.Reinterpret<byte>(sizeof(float) * 3).Slice(0, sizeof(float)*3* rCount),
                         byteStride: sizeof(float) * 3,
                         byteAlignment: sizeof(float)
                         );
@@ -897,7 +893,21 @@ namespace GLTFast.Export {
                 componentType = GLTFComponentType.Float,
                 count = vertexCount,
                 typeEnum = GLTFAccessorAttributeType.VEC3,
-                bufferView = bufferViewId
+                sparse = new AccessorSparse
+                {
+                    count=rCount,
+                    indices = new AccessorSparseIndices
+                    {
+                        bufferView= (uint)idxBid,
+                        byteOffset = 0,
+                        componentType = GLTFComponentType.UnsignedInt,
+                    },
+                    values = new AccessorSparseValues
+                    {
+                        bufferView = (uint)bufferViewId,
+                        byteOffset = 0,
+                    }
+                }
             };
 
             return AddAccessor(accessor);
@@ -923,7 +933,10 @@ namespace GLTFast.Export {
             Vector3[] deltaVertices = new Vector3[vertexCount];
             Vector3[] deltaNormals = new Vector3[vertexCount];
             Vector3[] deltaTangent = new Vector3[vertexCount];
-            var result = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
+            var nIndecies = new NativeArray<int>(vertexCount, Allocator.TempJob);
+            var nDeltaVertices = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
+            var nDeltaNormals = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
+            var nDeltaTagnents = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
 
 
             for (int i = 0;i < blendShapeCount; i++)
@@ -932,11 +945,32 @@ namespace GLTFast.Export {
                 mesh.weights[i] = 0.0f;
                 uMesh.GetBlendShapeFrameVertices(i, 0, deltaVertices, deltaNormals, deltaTangent);
 
+                int rCount = 0;
+                for (int j = 0; j < vertexCount; j++)
+                {
+                    if (deltaVertices[j].magnitude < 1e-5f && deltaNormals[j].magnitude < 1e-3f && deltaTangent[j].magnitude < 1e-3f)
+                    {
+                        continue;
+                    }
+                    nIndecies[rCount] = j;
+                    nDeltaVertices[rCount] = deltaVertices[j];
+                    nDeltaNormals[rCount] = deltaNormals[j];
+                    nDeltaTagnents[rCount] = deltaTangent[j];
+                    ++rCount;
+                }
+
+                int idxBuffer = WriteBufferViewToBuffer(
+                        nIndecies.Reinterpret<byte>(sizeof(int)).Slice(0, sizeof(int) * rCount),
+                        byteStride: sizeof(float) * 3,
+                        byteAlignment: sizeof(float)
+                        );
+
+
                 var target = new MorphTarget
                 {
-                    POSITION = AddBlendShapeAttributeAccessor(deltaVertices, result, vertexCount),
-                    NORMAL = AddBlendShapeAttributeAccessor(deltaNormals, result, vertexCount),
-                    TANGENT = AddBlendShapeAttributeAccessor(deltaTangent, result, vertexCount)
+                    POSITION = AddBlendShapeAttributeAccessor(nDeltaVertices, vertexCount, rCount, idxBuffer),
+                    NORMAL = AddBlendShapeAttributeAccessor(nDeltaNormals, vertexCount, rCount, idxBuffer),
+                    TANGENT = AddBlendShapeAttributeAccessor(nDeltaTagnents, vertexCount, rCount, idxBuffer)
                 };
 
                 foreach (var p in mesh.primitives)
@@ -945,7 +979,10 @@ namespace GLTFast.Export {
                 }
             }
 
-            result.Dispose();
+            nIndecies.Dispose();
+            nDeltaVertices.Dispose();
+            nDeltaNormals.Dispose();
+            nDeltaTagnents.Dispose();
         }
 
         async Task BakeMesh(int meshId, UnityEngine.Mesh.MeshData meshData) {
@@ -1942,7 +1979,7 @@ namespace GLTFast.Export {
         /// if required; see https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment )
         /// </param>
         /// <returns>Buffer view index</returns>
-        int WriteBufferViewToBuffer(NativeArray<byte> bufferViewData, int? byteStride = null, int byteAlignment = 0) {
+        int WriteBufferViewToBuffer(ReadOnlySpan<byte> bufferViewData, int? byteStride = null, int byteAlignment = 0) {
             Profiler.BeginSample("WriteBufferViewToBuffer");
             var buffer = CertifyBuffer();
             var byteOffset = buffer.Length;
@@ -1974,6 +2011,16 @@ namespace GLTFast.Export {
             m_BufferViews.Add(bufferView);
             Profiler.EndSample();
             return bufferViewId;
+        }
+
+        unsafe int WriteBufferViewToBuffer(NativeSlice<byte> bufferViewData, int? byteStride = null, int byteAlignment = 0)
+        {
+            return WriteBufferViewToBuffer(new ReadOnlySpan<byte>(bufferViewData.GetUnsafeReadOnlyPtr(), bufferViewData.Length), byteStride, byteAlignment);
+        }
+
+        unsafe int WriteBufferViewToBuffer(NativeArray<byte> bufferViewData, int? byteStride = null, int byteAlignment = 0)
+        {
+            return WriteBufferViewToBuffer(new ReadOnlySpan<byte>(bufferViewData.GetUnsafeReadOnlyPtr(), bufferViewData.Length), byteStride, byteAlignment);
         }
 
         void Dispose() {

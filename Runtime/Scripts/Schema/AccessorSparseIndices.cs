@@ -43,7 +43,7 @@ namespace GLTFast.Schema {
         internal void GltfSerialize(JsonWriter writer) {
             writer.AddObject();
             writer.AddProperty("bufferView", bufferView);
-            writer.AddProperty("componentType", componentType);
+            writer.AddProperty("componentType", (int)componentType);
             if (byteOffset >= 0) {
                 writer.AddProperty("byteOffset", byteOffset);
             }

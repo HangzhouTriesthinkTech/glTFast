@@ -32,6 +32,12 @@ namespace GLTFast.Export {
             var span = new ReadOnlySpan<byte>(array.GetUnsafeReadOnlyPtr(), array.Length);
             stream.Write(span);
         }
+
+        public static unsafe void Write(this Stream stream, NativeSlice<byte> array)
+        {
+            var span = new ReadOnlySpan<byte>(array.GetUnsafeReadOnlyPtr(), array.Length);
+            stream.Write(span);
+        }
 #else
         public static void Write(this Stream stream, IEnumerable<byte> array) {
             // TODO: Is there a faster way?
