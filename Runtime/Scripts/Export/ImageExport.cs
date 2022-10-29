@@ -158,11 +158,22 @@ namespace GLTFast.Export {
             return false;
         }
 
+        public static void GetImageSize(Texture2D asset, out int width, out int height)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(asset);
+            TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+
+            importer.GetSourceTextureWidthAndHeight(out width, out height);
+        }
+
         /// <inheritdoc />
         public override byte[] GetData() {
 #if UNITY_EDITOR
             if (validAssetPath && GetFormatFromExtension(m_AssetPath)==format) {
-                return File.ReadAllBytes(m_AssetPath);
+                GetImageSize(m_Texture, out var width, out var height);
+                if (width == m_Texture.width || height == m_Texture.height) {
+                    return File.ReadAllBytes(m_AssetPath);
+                }
             }
 #endif
             GenerateTexture(out var imageData);
