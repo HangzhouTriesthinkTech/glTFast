@@ -337,6 +337,7 @@ namespace GLTFast.Materials
 
         private void GenerateGeneralMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, Material mat)
         {
+            mat.name = gltfMaterial.name;
             if (gltfMaterial.doubleSided)
             {
                 mat.SetFloat(cullModePropId, 0);
