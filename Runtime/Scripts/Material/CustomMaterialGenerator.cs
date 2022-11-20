@@ -421,6 +421,7 @@ namespace GLTFast.Materials
             var shader = FindShader(gltfMaterial.doubleSided ?  "Cloth/shader_cloth_common": "Cloth/shader_cloth_common_single_side.shader");
 #endif
             var mat = new Material(shader);
+            mat.name = gltfMaterial.name;
             CustomTrySetTexture(
                 gltfMaterial.occlusionTexture,
                 mat,
