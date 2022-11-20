@@ -355,7 +355,7 @@ namespace GLTFast.Export
                         material.normalTexture = ExportNormalTextureInfo(normalTex, uMaterial, gltf);
                         if (material.normalTexture != null)
                         {
-                            ExportTextureTransform(material.normalTexture, uMaterial, k_NormalTex, gltf);
+                            ExportTextureTransform(material.normalTexture, uMaterial, k_FabricNormal, gltf);
                         }
                     }
                     else
