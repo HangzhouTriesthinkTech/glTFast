@@ -160,6 +160,11 @@ namespace GLTFast.Export {
             return (uint) m_Nodes.Count - 1;
         }
         
+        public Node GetNode(int nodeId)
+        {
+            return m_Nodes[nodeId];
+        }
+
         /// <inheritdoc />
         public void AddMeshToNode(int nodeId, UnityEngine.Mesh uMesh, int[] materialIds) {
             CertifyNotDisposed();
@@ -809,9 +814,8 @@ namespace GLTFast.Export {
         {
             var smr = m_SkinMeshes[skinId];
             var skin = m_Skins[skinId];
-            if (smr != null)
+            if (smr != null && smr.sharedMesh != null)
             {
-                // TODO: generate matrix buffer.
                 var matrixes = smr.sharedMesh.bindposes;
 
                 if (matrixes.Length > 0)
@@ -1938,7 +1942,7 @@ namespace GLTFast.Export {
             return meshId;
         }
 
-        unsafe int WriteBufferViewToBuffer( byte[] bufferViewData, int? byteStride = null) {
+         unsafe int WriteBufferViewToBuffer( byte[] bufferViewData, int? byteStride = null) {
             var bufferHandle = GCHandle.Alloc(bufferViewData,GCHandleType.Pinned);
             fixed (void* bufferAddress = &bufferViewData[0]) {
                 var nativeData = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(bufferAddress,bufferViewData.Length,Allocator.None);

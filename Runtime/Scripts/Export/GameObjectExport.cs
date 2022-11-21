@@ -165,7 +165,10 @@ namespace GLTFast.Export {
                 mesh = smr.sharedMesh;
                 smr.GetSharedMaterials(tempMaterials);
 
-                m_Writer.AddSkinToNode(nodeId, smr);
+                if (smr.sharedMesh != null)
+                {
+                    m_Writer.AddSkinToNode(nodeId, smr);
+                }
             }
 
             var materialIds = new int[tempMaterials.Count];
@@ -180,6 +183,14 @@ namespace GLTFast.Export {
 
             if (mesh != null) {
                 m_Writer.AddMeshToNode(nodeId,mesh,materialIds);
+            } else if (tempMaterials.Count > 0)
+            {
+                var node = m_Writer.GetNode(nodeId);
+                node.extensions = node.extensions ?? new Schema.NodeExtensions();
+                node.extensions.EXT_node_materials = new Schema.NodeMaterials
+                {
+                    materials = materialIds
+                };
             }
 
             if (gameObject.TryGetComponent(out Camera camera)) {

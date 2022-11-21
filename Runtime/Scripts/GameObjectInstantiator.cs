@@ -292,7 +292,10 @@ namespace GLTFast {
                         smr.rootBone = nodes[rootJoint.Value].transform;
                     }
                 }
-                smr.sharedMesh = mesh;
+                if (mesh)
+                {
+                    smr.sharedMesh = mesh;
+                }
                 if (morphTargetWeights!=null) {
                     for (var i = 0; i < morphTargetWeights.Length; i++) {
                         var weight = morphTargetWeights[i];
@@ -505,6 +508,21 @@ namespace GLTFast {
             var light = lightGameObject.AddComponent<Light>();
             lightSource.ToUnityLight(light, settings.lightIntensityFactor);
             sceneInstance.AddLight(light);
+        }
+
+        public void AddNodeMaterials(uint nodeIndex, int[] materialIds)
+        {
+            GameObject meshGo;
+            meshGo = nodes[nodeIndex];
+            var smr = meshGo.AddComponent<SkinnedMeshRenderer>();
+            var materials = new Material[materialIds.Length];
+            for (var index = 0; index < materials.Length; index++)
+            {
+                var material = gltf.GetMaterial(materialIds[index]) ?? gltf.GetDefaultMaterial();
+                material.enableInstancing = true;
+                materials[index] = material;
+            }
+            smr.materials = materials;
         }
         
         /// <inheritdoc />

@@ -215,9 +215,14 @@ namespace GLTFast {
                         if ((e.KHR_lights_punctual?.light ?? -1) < 0) {
                             e.KHR_lights_punctual = null;
                         }
+                        if (e.EXT_node_materials?.materials == null)
+                        {
+                            e.EXT_node_materials = null;
+                        }
                         // Unset `extension` if none of them was valid
                         if (e.EXT_mesh_gpu_instancing == null && 
-                            e.KHR_lights_punctual == null ) {
+                            e.KHR_lights_punctual == null &&
+                            e.EXT_node_materials == null) {
                             root.nodes[i].extensions = null;
                         }
                     }

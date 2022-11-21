@@ -135,7 +135,12 @@ namespace GLTFast {
             uint nodeIndex,
             uint lightIndex
         );
-        
+
+        void AddNodeMaterials(
+            uint nodeIndex,
+            int[] materialIds
+        );
+
         /// <summary>
         /// Is called at last, after all scene content has been created.
         /// Immediately afterwards the scene will be rendered, so use it to

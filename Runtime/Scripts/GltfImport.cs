@@ -2057,6 +2057,11 @@ namespace GLTFast {
                         instantiator.AddLightPunctual(nodeIndex,(uint)lightIndex);
                     }
                 }
+
+                if (node.extensions?.EXT_node_materials != null && node.extensions?.EXT_node_materials != null)
+                {
+                    instantiator.AddNodeMaterials(nodeIndex, node.extensions.EXT_node_materials.materials);
+                }
                 
                 Profiler.EndSample();
             }

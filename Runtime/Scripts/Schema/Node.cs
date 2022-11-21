@@ -127,6 +127,7 @@ namespace GLTFast.Schema {
         /// <inheritdoc cref="MeshGpuInstancing"/>
         public MeshGpuInstancing EXT_mesh_gpu_instancing;
         public NodeLightsPunctual KHR_lights_punctual;
+        public NodeMaterials EXT_node_materials;
         
         // Whenever an extension is added, the JsonParser
         // (specifically step four of JsonParser.ParseJson)
@@ -142,6 +143,11 @@ namespace GLTFast.Schema {
             if (KHR_lights_punctual != null) {
                 writer.AddProperty("KHR_lights_punctual");
                 KHR_lights_punctual.GltfSerialize(writer);
+            }
+            if (EXT_node_materials != null)
+            {
+                writer.AddProperty("EXT_node_materials");
+                EXT_node_materials.GltfSerialize(writer);
             }
             writer.Close();
         }
