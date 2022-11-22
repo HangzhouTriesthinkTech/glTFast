@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 455bfa13ee9db9f4e99570548c4d2cce
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _MainTex: {instanceID: 0}
+  - _MainNormalTex: {instanceID: 0}
+  - _SmoothTex: {instanceID: 0}
+  - _CurveTex: {instanceID: 0}
+  - _SSSLUT: {fileID: 2800000, guid: 49ff115e6de12f344bfc2eda7b889c31, type: 3}
+  - _KelemenLUT: {fileID: 2800000, guid: a050a0ef3b2729e4e9b5eb76a4bed2e6, type: 3}
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

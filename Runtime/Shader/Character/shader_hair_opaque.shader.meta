@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 6938b51a768da274ca4e8e837b56bb6e
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _MainTex: {instanceID: 0}
+  - _Normal: {instanceID: 0}
+  - _AnisoMap: {fileID: 2800000, guid: 4aa65ef440009e5479cd5a2e6d812012, type: 3}
+  - _Occlusion: {instanceID: 0}
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -49,7 +49,7 @@ namespace GLTFast.Materials
         protected static readonly int k_Occlusion = Shader.PropertyToID("_Occlusion");
 
 #if UNITY_EDITOR
-        protected const string CUSTOM_SHADER_PATH_PREFIX = "Assets/Scripts/Render/Shader/";
+        protected const string CUSTOM_SHADER_PATH_PREFIX = "Packages/com.atteneder.gltfast/Runtime/Shader/";
 #endif
 
         public override Material GenerateMaterial(
