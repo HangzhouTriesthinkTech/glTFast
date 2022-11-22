@@ -45,6 +45,9 @@ namespace GLTFast.Materials
         protected static readonly int k_RoughnessAdjust = Shader.PropertyToID("_RoughnessAdjust");
         protected static readonly int k_OcclusionAdjust = Shader.PropertyToID("_OcclusionAdjust");
 
+        protected static readonly int k_Roughness = Shader.PropertyToID("_Roughness");
+        protected static readonly int k_Occlusion = Shader.PropertyToID("_Occlusion");
+
 #if UNITY_EDITOR
         protected const string CUSTOM_SHADER_PATH_PREFIX = "Assets/Scripts/Render/Shader/";
 #endif
@@ -68,6 +71,10 @@ namespace GLTFast.Materials
                 {
                     return this.GenerateCharacterEyeMaterial(gltfMaterial, gltf, pointsSupport);
                 }
+                if (gltfMaterial.extensions.VENDOR_materials_characterLip != null)
+                {
+                    return this.GenerateCharacterLipMaterial(gltfMaterial, gltf, pointsSupport);
+                }
                 if (gltfMaterial.extensions.VENDOR_materials_characterEyelash != null)
                 {
                     return this.GenerateCharacterEyelashMaterial(gltfMaterial, gltf, pointsSupport);
@@ -75,6 +82,10 @@ namespace GLTFast.Materials
                 if (gltfMaterial.extensions.VENDOR_materials_characterCornea != null)
                 {
                     return this.GenerateCharacterCorneaMaterial(gltfMaterial, gltf, pointsSupport);
+                }
+                if (gltfMaterial.extensions.VENDOR_materials_characterHairOpaque != null)
+                {
+                    return this.GenerateCharacterHairOpaqueMaterial(gltfMaterial, gltf, pointsSupport);
                 }
                 if (gltfMaterial.extensions.VENDOR_materials_characterHairTransparent != null)
                 {
@@ -302,6 +313,42 @@ namespace GLTFast.Materials
             return mat;
         }
 
+        private Material GenerateCharacterLipMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>($"{CUSTOM_SHADER_PATH_PREFIX}Character/shader_lip.shader");
+#else
+            var shader = FindShader("Character/shader_lip");
+#endif
+            var mat = new Material(shader);
+            this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
+
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                    mat,
+                    gltf,
+                    k_MainTex
+                );
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.metallicRoughnessTexture,
+                    mat,
+                    gltf,
+                    k_Roughness
+                );
+            }
+            var ext = gltfMaterial.extensions.VENDOR_materials_characterLip;
+            CustomTrySetTexture(
+                ext.specular,
+                mat,
+                gltf,
+                k_Specular
+            );
+            return mat;
+        }
+
         private Material GenerateCharacterEyelashMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
         {
 #if UNITY_EDITOR
@@ -406,6 +453,49 @@ namespace GLTFast.Materials
             );
             mat.SetFloat(k_CutOff, ext.cutOff);
             mat.SetFloat(k_SpecularAdjust, ext.specularAdjust);
+            return mat;
+        }
+
+        private Material GenerateCharacterHairOpaqueMaterial(Schema.Material gltfMaterial, IGltfReadable gltf, bool pointsSupport)
+        {
+#if UNITY_EDITOR
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>($"{CUSTOM_SHADER_PATH_PREFIX}Character/shader_hair_opaque.shader");
+#else
+            var shader = FindShader("Character/shader_hair_opaque");
+#endif
+            var mat = new Material(shader);
+            this.GenerateGeneralMaterial(gltfMaterial, gltf, mat);
+            if (gltfMaterial.pbrMetallicRoughness != null)
+            {
+                mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
+                CustomTrySetTexture(
+                    gltfMaterial.pbrMetallicRoughness.baseColorTexture,
+                    mat,
+                    gltf,
+                    k_MainTex
+                );
+            }
+            CustomTrySetTexture(gltfMaterial.normalTexture, mat, gltf, k_Normal);
+            var ext = gltfMaterial.extensions.VENDOR_materials_characterHairOpaque;
+
+            CustomTrySetTexture(
+               ext.anisoMap,
+               mat,
+               gltf,
+               k_AnisoMap
+            );
+            mat.SetFloat(k_SpecularAdjust, ext.specularAdjust);
+
+            CustomTrySetTexture(
+                gltfMaterial.occlusionTexture,
+                mat,
+                gltf,
+                k_Occlusion
+            );
+            if (gltfMaterial.occlusionTexture != null)
+            {
+                mat.SetFloat(k_OcclusionAdjust, gltfMaterial.occlusionTexture.strength);
+            }
             return mat;
         }
 

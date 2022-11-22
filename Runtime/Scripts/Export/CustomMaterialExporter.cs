@@ -44,6 +44,9 @@ namespace GLTFast.Export
         static readonly int k_RoughnessAdjust = Shader.PropertyToID("_RoughnessAdjust");
         static readonly int k_OcclusionAdjust = Shader.PropertyToID("_OcclusionAdjust");
 
+        static readonly int k_Roughness = Shader.PropertyToID("_Roughness");
+        static readonly int k_Occlusion = Shader.PropertyToID("_Occlusion");
+
         public override bool ConvertMaterial(UnityEngine.Material uMaterial, out Schema.Material material, IGltfWritable gltf, ICodeLogger logger)
         {
             material = new Material
@@ -63,6 +66,10 @@ namespace GLTFast.Export
                     {
                         return ConvertCharacterEmptyMaterial(uMaterial, material, gltf, logger);
                     }
+                case "Character/shader_lip":
+                    {
+                        return ConvertCharacterLipMaterial(uMaterial, material, gltf, logger);
+                    }
                 case "Character/shader_skin_sss":
                     {
                         return ConvertCharacterSkinSSSMaterial(uMaterial, material, gltf, logger);
@@ -78,6 +85,10 @@ namespace GLTFast.Export
                 case "Character/shader_cornea":
                     {
                         return ConvertCharacterCorneaMaterial(uMaterial, material, gltf, logger);
+                    }
+                case "Character/shader_hair_opaque":
+                    {
+                        return ConvertCharacterHairOpaqueMaterial(uMaterial, material, gltf, logger);
                     }
                 case "Character/shader_hair_transparent":
                     {
@@ -195,6 +206,28 @@ namespace GLTFast.Export
             var pbr = new PbrMetallicRoughness { metallicFactor = 0, roughnessFactor = 1.0f };
             material.pbrMetallicRoughness = pbr;
 
+            if (uMaterial.HasProperty(k_Roughness))
+            {
+                var tex = uMaterial.GetTexture(k_Roughness);
+
+                if (tex != null)
+                {
+                    if (tex is Texture2D)
+                    {
+                        pbr.metallicRoughnessTexture = ExportNormalTextureInfo(tex, uMaterial, gltf);
+                        if (material.normalTexture != null)
+                        {
+                            ExportTextureTransform(material.normalTexture, uMaterial, k_Roughness, gltf);
+                        }
+                    }
+                    else
+                    {
+                        logger?.Error(LogCode.TextureInvalidType, "normal", uMaterial.name);
+                        return false;
+                    }
+                }
+            }
+
             if (uMaterial.HasProperty(k_Color))
             {
                 pbr.baseColor = uMaterial.GetColor(k_Color);
@@ -257,6 +290,22 @@ namespace GLTFast.Export
             return true;
         }
 
+        private bool ConvertCharacterLipMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
+        {
+            if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            if (!ConvertPbrMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            var mat = new Character.MaterialLip();
+            material.extensions.VENDOR_materials_characterLip = mat;
+            mat.specular = ExportAnyTexture(uMaterial, k_Specular, gltf);
+            return true;
+        }
+
         private bool ConvertCharacterEyelashMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
@@ -287,6 +336,24 @@ namespace GLTFast.Export
             material.extensions.VENDOR_materials_characterCornea = ext;
             ext.specularPower = uMaterial.GetFloat(k_SpecularPower);
             ext.specularScale = uMaterial.GetFloat(k_SpecularScale);
+            return true;
+        }
+
+        private bool ConvertCharacterHairOpaqueMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
+        {
+            if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            if (!ConvertPbrMaterial(uMaterial, material, gltf, logger))
+            {
+                return false;
+            }
+            var ext = new Character.MaterialHairOpaque();
+            material.extensions.VENDOR_materials_characterHairOpaque = ext;
+            ext.anisoMap = ExportAnyTexture(uMaterial, k_AnisoMap, gltf);
+            ext.specularAdjust = uMaterial.GetFloat(k_SpecularAdjust);
+            material.occlusionTexture = ExportOcclusionTextureInfo(uMaterial, k_Occlusion, gltf);
             return true;
         }
 

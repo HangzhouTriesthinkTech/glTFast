@@ -47,7 +47,9 @@ namespace GLTFast.Schema {
         public Character.MaterialSkinSSS VENDOR_materials_characterSkinSSS;
         public Character.MaterialEye VENDOR_materials_characterEye;
         public Character.MaterialEyelash VENDOR_materials_characterEyelash;
+        public Character.MaterialLip VENDOR_materials_characterLip;
         public Character.MaterialCornea VENDOR_materials_characterCornea;
+        public Character.MaterialHairOpaque VENDOR_materials_characterHairOpaque;
         public Character.MaterialHairTransparent VENDOR_materials_characterHairTransparent;
         public Cloth.MaterialCommon VENDOR_materials_clothCommon;
 
@@ -86,6 +88,11 @@ namespace GLTFast.Schema {
                 writer.AddProperty("VENDOR_materials_characterSkinSSS");
                 VENDOR_materials_characterSkinSSS.GltfSerialize(writer);
             }
+            if (VENDOR_materials_characterLip != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterLip");
+                VENDOR_materials_characterLip.GltfSerialize(writer);
+            }
             if (VENDOR_materials_characterEye != null)
             {
                 writer.AddProperty("VENDOR_materials_characterEye");
@@ -100,6 +107,11 @@ namespace GLTFast.Schema {
             {
                 writer.AddProperty("VENDOR_materials_characterCornea");
                 VENDOR_materials_characterCornea.GltfSerialize(writer);
+            }
+            if (VENDOR_materials_characterHairOpaque != null)
+            {
+                writer.AddProperty("VENDOR_materials_characterHairOpaque");
+                VENDOR_materials_characterHairOpaque.GltfSerialize(writer);
             }
             if (VENDOR_materials_characterHairTransparent != null)
             {

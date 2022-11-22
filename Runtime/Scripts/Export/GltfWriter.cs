@@ -878,7 +878,7 @@ namespace GLTFast.Export {
             Profiler.EndSample();
             for (var meshId = 0; meshId < m_Meshes.Count; meshId++) {
                 await BakeMesh(meshId, meshDataArray[meshId]);
-                await BakeMeshBlendShapes(meshId, meshDataArray[meshId]);
+                BakeMeshBlendShapes(meshId, meshDataArray[meshId]);
                 await m_DeferAgent.BreakPoint();
             }
             meshDataArray.Dispose();
@@ -917,7 +917,7 @@ namespace GLTFast.Export {
             return AddAccessor(accessor);
         }
 
-        async Task BakeMeshBlendShapes(int meshId, UnityEngine.Mesh.MeshData meshData)
+        void BakeMeshBlendShapes(int meshId, UnityEngine.Mesh.MeshData meshData)
         {
             var mesh = m_Meshes[meshId];
             var uMesh = m_UnityMeshes[meshId];
