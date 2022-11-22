@@ -160,6 +160,14 @@ namespace GLTFast {
                         {
                             mat.extensions.VENDOR_materials_characterHairTransparent = null;
                         }
+                        if (fake.VENDOR_materials_characterLip == null)
+                        {
+                            mat.extensions.VENDOR_materials_characterLip = null;
+                        }
+                        if (fake.VENDOR_materials_characterHairOpaque == null)
+                        {
+                            mat.extensions.VENDOR_materials_characterHairOpaque = null;
+                        }
                         if (fake.VENDOR_materials_clothCommon == null)
                         {
                             mat.extensions.VENDOR_materials_clothCommon = null;

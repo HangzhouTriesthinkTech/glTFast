@@ -29,5 +29,7 @@ namespace GLTFast.FakeSchema {
         public string VENDOR_materials_characterCornea;
         public string VENDOR_materials_characterHairTransparent;
         public string VENDOR_materials_clothCommon;
+        public string VENDOR_materials_characterLip;
+        public string VENDOR_materials_characterHairOpaque;
     }
 }
