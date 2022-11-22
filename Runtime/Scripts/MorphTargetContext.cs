@@ -297,7 +297,7 @@ namespace GLTFast {
 
         public void AddToMesh(Mesh mesh, string name) {
             Profiler.BeginSample("AddBlendShapeFrame");
-            mesh.AddBlendShapeFrame(name,1f,positions,normals,tangents);
+            mesh.AddBlendShapeFrame(name,100f,positions,normals,tangents);
             Profiler.EndSample();
         }
 
