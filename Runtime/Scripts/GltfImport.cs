@@ -118,6 +118,16 @@ namespace GLTFast {
             ExtensionName.MaterialsTransmission,
             ExtensionName.MeshGPUInstancing,
             ExtensionName.LightsPunctual,
+
+            "VENDOR_materials_characterEmpty",
+            "VENDOR_materials_characterEye",
+            "VENDOR_materials_characterLip",
+            "VENDOR_materials_characterEyelash",
+            "VENDOR_materials_characterCornea",
+            "VENDOR_materials_characterHairOpaque",
+            "VENDOR_materials_characterHairTransparent",
+            "VENDOR_materials_clothCommon",
+            "EXT_node_materials",
         };
 
         static IDeferAgent defaultDeferAgent;

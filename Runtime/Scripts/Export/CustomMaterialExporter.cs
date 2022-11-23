@@ -266,7 +266,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterEmptyMaterial(UnityEngine.Material uMaterial, Schema.Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterEmpty");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterEmpty", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -277,7 +277,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterEyeMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterEye");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterEye", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -294,7 +294,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterLipMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterLip");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterLip", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -311,7 +311,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterEyelashMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterEyelash");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterEyelash", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -328,7 +328,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterCorneaMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterCornea");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterCornea", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -346,7 +346,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterHairOpaqueMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterHairOpaque");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterHairOpaque", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -365,7 +365,7 @@ namespace GLTFast.Export
 
         private bool ConvertCharacterHairTransparentMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_characterHairTransparent");
+            gltf.RegisterExtensionUsage("VENDOR_materials_characterHairTransparent", false);
             if (!ConvertGeneralMaterial(uMaterial, material, gltf, logger))
             {
                 return false;
@@ -414,7 +414,7 @@ namespace GLTFast.Export
 
         private bool ConvertClothCommonMaterial(UnityEngine.Material uMaterial, Material material, IGltfWritable gltf, ICodeLogger logger, bool doubleSided)
         {
-            gltf.RegisterExtensionUsage("VENDOR_materials_clothCommon");
+            gltf.RegisterExtensionUsage("VENDOR_materials_clothCommon", false);
             material.occlusionTexture = ExportOcclusionTextureInfo(uMaterial, k_AOTex, gltf);
 
             if (

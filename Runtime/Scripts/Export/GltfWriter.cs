@@ -682,7 +682,11 @@ namespace GLTFast.Export {
             }
             if (m_Skins != null)
             {
+#if GLTFAST_MESH_DATA
                 await BakeSkins();
+#else
+                await BakeSkinsLegacy();
+#endif
             }
 
 
@@ -1648,7 +1652,7 @@ namespace GLTFast.Export {
                         uMesh.GetUVs( channel, uvs);
                         var outStream = new NativeArray<Vector2>(uvs.Count, Allocator.TempJob);
                         for (var i = 0; i < uvs.Count; i++) {
-                            outStream[i] = uvs[i];
+                            outStream[i] = new Vector2(uvs[i].x, 1.0f - uvs[i].y);
                         }
                         bufferViewId = WriteBufferViewToBuffer(
                             outStream.Reinterpret<byte>(8),
@@ -1674,6 +1678,69 @@ namespace GLTFast.Export {
             m_Accessors.Add(accessor);
             return accessorId;
         }
+
+        async Task BakeSkinsLegacy()
+        {
+            IDictionary<GameObject, int> objMap = new Dictionary<GameObject, int>();
+            for (var nodeId = 0; nodeId < m_GameObjects.Count; nodeId++)
+            {
+                var gameObj = m_GameObjects[nodeId];
+                if (gameObj != null)
+                {
+                    objMap.Add(gameObj, nodeId);
+                }
+            }
+            for (var skinId = 0; skinId < m_Skins.Count; skinId++)
+            {
+                await BakeSkinLegacy(skinId, objMap);
+            }
+        }
+
+        async Task BakeSkinLegacy(int skinId, IDictionary<GameObject, int> objMap)
+        {
+            var smr = m_SkinMeshes[skinId];
+            var skin = m_Skins[skinId];
+            if (smr != null && smr.sharedMesh != null)
+            {
+                var matrixes = smr.sharedMesh.bindposes;
+
+                if (matrixes.Length > 0)
+                {
+                    var dest = new NativeArray<float4x4>(matrixes.Length, Allocator.TempJob);
+                    Accessor accesor = new Accessor
+                    {
+                        typeEnum = GLTFAccessorAttributeType.MAT4,
+                        byteOffset = 0,
+                        componentType = GLTFComponentType.Float,
+                        count = matrixes.Length,
+                    };
+
+                    for (int i = 0; i < matrixes.Length; i++)
+                    {
+                        var tmp = (float4x4)matrixes[i];
+                        tmp.c0.y *= -1;
+                        tmp.c0.z *= -1;
+                        tmp.c1.x *= -1;
+                        tmp.c2.x *= -1;
+                        tmp.c3.x *= -1;
+                        dest[i] = tmp;
+                    }
+
+                    accesor.bufferView = WriteBufferViewToBuffer(dest.Reinterpret<byte>(sizeof(float) * 16));
+                    skin.inverseBindMatrices = AddAccessor(accesor);
+                    dest.Dispose();
+                }
+
+                objMap.TryGetValue(smr.rootBone.gameObject, out skin.skeleton);
+
+                skin.joints = new int[smr.bones.Length];
+                for (int i = 0; i < skin.joints.Length; i++)
+                {
+                    objMap.TryGetValue(smr.bones[i].gameObject, out skin.joints[i]);
+                }
+            }
+        }
+
 #endif // #if GLTFAST_MESH_DATA
 
         async Task<bool> BakeImages(string directory) {
@@ -1978,7 +2045,8 @@ namespace GLTFast.Export {
             }
             return m_BufferStream;
         }
-        
+
+#if NET_STANDARD
         /// <summary>
         /// Writes the given data to the main buffer, creates a bufferView and returns its index
         /// </summary>
@@ -2033,6 +2101,60 @@ namespace GLTFast.Export {
         {
             return WriteBufferViewToBuffer(new ReadOnlySpan<byte>(bufferViewData.GetUnsafeReadOnlyPtr(), bufferViewData.Length), byteStride, byteAlignment);
         }
+#else
+
+        /// <summary>
+        /// Writes the given data to the main buffer, creates a bufferView and returns its index
+        /// </summary>
+        /// <param name="bufferViewData">Content to write to buffer</param>
+        /// <param name="byteStride">The byte size of an element. Provide it,
+        /// if it cannot be inferred from the accessor</param>
+        /// <param name="byteAlignment">If not zero, the offsets of the bufferView
+        /// will be multiple of it to please alignment rules (padding bytes will be added,
+        /// if required; see https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment )
+        /// </param>
+        /// <returns>Buffer view index</returns>
+        int WriteBufferViewToBuffer(NativeArray<byte> bufferViewData, int? byteStride = null, int byteAlignment = 0)
+        {
+            Profiler.BeginSample("WriteBufferViewToBuffer");
+            var buffer = CertifyBuffer();
+            var byteOffset = buffer.Length;
+
+            if (byteAlignment > 0)
+            {
+                Assert.IsTrue(byteAlignment < 5); // There is no componentType that requires more than 4 bytes
+                var alignmentByteCount = (byteAlignment - (byteOffset % byteAlignment)) % byteAlignment;
+                for (var i = 0; i < alignmentByteCount; i++)
+                {
+                    buffer.WriteByte(0);
+                }
+                // Update byteOffset
+                byteOffset = buffer.Length;
+            }
+
+            buffer.Write(bufferViewData);
+
+            var bufferView = new BufferView
+            {
+                buffer = 0,
+                byteOffset = (int)byteOffset,
+                byteLength = bufferViewData.Length,
+            };
+            if (byteStride.HasValue)
+            {
+                // Adhere data alignment rules
+                Assert.IsTrue(byteStride.Value % 4 == 0);
+                bufferView.byteStride = byteStride.Value;
+            }
+            m_BufferViews = m_BufferViews ?? new List<BufferView>();
+            var bufferViewId = m_BufferViews.Count;
+            m_BufferViews.Add(bufferView);
+            Profiler.EndSample();
+            return bufferViewId;
+        }
+
+
+#endif
 
         void Dispose() {
             m_Settings = null;
