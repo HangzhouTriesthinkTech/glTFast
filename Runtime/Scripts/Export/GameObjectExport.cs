@@ -186,6 +186,7 @@ namespace GLTFast.Export {
             } else if (tempMaterials.Count > 0)
             {
                 var node = m_Writer.GetNode(nodeId);
+                m_Writer.RegisterExtensionUsage("EXT_node_materials");
                 node.extensions = node.extensions ?? new Schema.NodeExtensions();
                 node.extensions.EXT_node_materials = new Schema.NodeMaterials
                 {

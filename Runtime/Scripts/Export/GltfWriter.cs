@@ -90,8 +90,8 @@ namespace GLTFast.Export {
         
         Root m_Gltf;
 
-        HashSet<Extension> m_ExtensionsUsedOnly;
-        HashSet<Extension> m_ExtensionsRequired;
+        HashSet<string> m_ExtensionsUsedOnly;
+        HashSet<string> m_ExtensionsRequired;
         
         List<Scene> m_Scenes;
         List<Node> m_Nodes;
@@ -473,18 +473,27 @@ namespace GLTFast.Export {
 
         /// <inheritdoc />
         public void RegisterExtensionUsage(Extension extension, bool required = true) {
+            RegisterExtensionUsage(extension.GetName(), required);
+        }
+
+        public void RegisterExtensionUsage(string extension, bool required = true)
+        {
             CertifyNotDisposed();
-            if (required) {
-                m_ExtensionsRequired = m_ExtensionsRequired ?? new HashSet<Extension>();
+            if (required)
+            {
+                m_ExtensionsRequired = m_ExtensionsRequired ?? new HashSet<string>();
                 m_ExtensionsRequired.Add(extension);
-            } else {
-                if (m_ExtensionsRequired == null || !m_ExtensionsRequired.Contains(extension)) {
-                    m_ExtensionsUsedOnly = m_ExtensionsUsedOnly ?? new HashSet<Extension>();
+            }
+            else
+            {
+                if (m_ExtensionsRequired == null || !m_ExtensionsRequired.Contains(extension))
+                {
+                    m_ExtensionsUsedOnly = m_ExtensionsUsedOnly ?? new HashSet<string>();
                     m_ExtensionsUsedOnly.Add(extension);
                 }
             }
         }
-        
+
         /// <inheritdoc />
         public async Task<bool> SaveToFileAndDispose(string path) {
             
@@ -727,10 +736,8 @@ namespace GLTFast.Export {
                 m_Gltf.extensionsUsed = new string[m_ExtensionsRequired.Count + usedOnlyCount];
                 var i = 0;
                 foreach (var extension in m_ExtensionsRequired) {
-                    var name = extension.GetName();
-                    Assert.IsFalse(string.IsNullOrEmpty(name));
-                    m_Gltf.extensionsRequired[i] = name;
-                    m_Gltf.extensionsUsed[i] = name;
+                    m_Gltf.extensionsRequired[i] = extension;
+                    m_Gltf.extensionsUsed[i] = extension;
                     i++;
                 }
             }
@@ -745,7 +752,7 @@ namespace GLTFast.Export {
                 }
 
                 foreach (var extension in m_ExtensionsUsedOnly) {
-                    m_Gltf.extensionsUsed[i++] = extension.GetName();
+                    m_Gltf.extensionsUsed[i++] = extension;
                 }
             }
         }
