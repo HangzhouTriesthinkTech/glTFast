@@ -158,6 +158,7 @@ namespace GLTFast.Export {
             return false;
         }
 
+#if UNITY_EDITOR
         public static void GetImageSize(Texture2D asset, out int width, out int height)
         {
             string assetPath = AssetDatabase.GetAssetPath(asset);
@@ -165,6 +166,7 @@ namespace GLTFast.Export {
 
             importer.GetSourceTextureWidthAndHeight(out width, out height);
         }
+#endif
 
         /// <inheritdoc />
         public override byte[] GetData() {

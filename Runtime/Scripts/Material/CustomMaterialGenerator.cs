@@ -508,7 +508,7 @@ namespace GLTFast.Materials
                 $"{CUSTOM_SHADER_PATH_PREFIX}Cloth/shader_cloth_common_single_side.shader"
                 );
 #else
-            var shader = FindShader(gltfMaterial.doubleSided ?  "Cloth/shader_cloth_common": "Cloth/shader_cloth_common_single_side.shader");
+            var shader = FindShader(gltfMaterial.doubleSided ?  "Cloth/shader_cloth_common": "Cloth/shader_cloth_common_single_side");
 #endif
             var mat = new Material(shader);
             mat.name = gltfMaterial.name;
