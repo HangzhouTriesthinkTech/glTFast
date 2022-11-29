@@ -78,7 +78,7 @@ namespace GLTFast {
         /// See https://github.com/atteneder/glTFast/issues/220 for details 
         /// </summary>
         [Tooltip("Controls if mipmaps are created for imported textures.")]
-        public bool generateMipMaps;
+        public bool generateMipMaps = true;
 
         /// <summary>
         /// Defines the default minification filter mode for textures that have no such specification in data
