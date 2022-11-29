@@ -989,6 +989,29 @@ namespace GLTFast {
                     imageReadable[i] = imageVariants[i]!=null && imageVariants[i].Count > 1;
                 }
 
+                // Make EXT_node_materials texture readable.
+                foreach (var node in gltfRoot.nodes)
+                {
+                    if (node.extensions != null && node.extensions?.EXT_node_materials != null)
+                    {
+                        foreach (var matId in node.extensions.EXT_node_materials.materials) {
+                            var mat = gltfRoot.materials[matId];
+                            
+                            if (mat.pbrMetallicRoughness != null)
+                            {
+                                if (mat.pbrMetallicRoughness.baseColorTexture != null)
+                                {
+                                    var texId = mat.pbrMetallicRoughness.baseColorTexture.index;
+                                    if (texId < 0) continue;
+                                    var imageId = gltfRoot.textures[texId].source;
+                                    if (imageId < 0) continue;
+                                    imageReadable[imageId] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Profiler.EndSample();
                 List<Task> imageTasks = null;
 
