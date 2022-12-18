@@ -1335,22 +1335,39 @@ namespace GLTFast.Jobs {
         [NativeDisableUnsafePtrRestriction]
         public float4* result;
 
+        [ReadOnly]
+        public int componentCount;
+
 #if UNITY_JOBS
         public void Execute(int i, int count) {
-            var resultV = (float4*) ((byte*)result + i*outputByteStride);
-            var off = (float4*) (input + i*inputByteStride);
+            var resultV = (float*) ((byte*)result + i*outputByteStride);
+            var off = (float*) (input + i*inputByteStride);
             
             for (var x = 0; x < count; x++) {
-                *resultV = *off;
-                resultV = (float4*)((byte*)resultV + outputByteStride);
-                off = (float4*)((byte*)off + inputByteStride);
+                for (int j = 0; j < componentCount; j++)
+                {
+                    resultV[j] = off[j];
+                }
+                for (int j = componentCount; j < 4; j++)
+                {
+                    resultV[j] = 0f;
+                }
+                resultV = (float*)((byte*)resultV + outputByteStride);
+                off = (float*)((byte*)off + inputByteStride);
             }
         }
 #else
         public void Execute(int i) {
-            var resultV = (float4*) (((byte*)result) + (i*outputByteStride));
-            var off = input + (i*inputByteStride);
-            *resultV = *((float4*)off);
+            var resultV = (float*) (((byte*)result) + (i*outputByteStride));
+            var off = (float*)(input + (i*inputByteStride));
+            for (int j = 0; j < componentCount; j++)
+            {
+                resultV[j] = off[j];
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                resultV[j] = 0f;
+            }
         }
 #endif
     }
@@ -1378,32 +1395,40 @@ namespace GLTFast.Jobs {
         [NativeDisableUnsafePtrRestriction]
         public float4* result;
 
+        [ReadOnly]
+        public int componentCount;
+
+
 #if UNITY_JOBS
         public void Execute(int i, int count) {
-            var resultV = (float4*) ((byte*)result + i*outputByteStride);
+            var resultV = (float*) ((byte*)result + i*outputByteStride);
             var off = input + i*inputByteStride;
             
             for (var x = 0; x < count; x++) {
-                *resultV = new float4(
-                    off[0] / 255f,
-                    off[1] / 255f,
-                    off[2] / 255f,
-                    off[3] / 255f
-                    );
-                resultV = (float4*)((byte*)resultV + outputByteStride);
+                for (int j = 0; j < componentCount; j++)
+                {
+                    resultV[j] = off[j] / 255f;
+                }
+                for (int j = componentCount; j < 4; j++)
+                {
+                    resultV[j] = 0f;
+                }
+                resultV = (float*)((byte*)resultV + outputByteStride);
                 off += inputByteStride;
             }
         }
 #else
         public void Execute(int i) {
-            var resultV = (float4*) (((byte*)result) + (i*outputByteStride));
+            var resultV = (float*) (((byte*)result) + (i*outputByteStride));
             var off = input + (i*inputByteStride);
-            *resultV = new float4(
-                off[0] / 255f,
-                off[1] / 255f,
-                off[2] / 255f,
-                off[3] / 255f
-                );
+            for (int j = 0; j < componentCount; j++)
+            {
+                resultV[j] = off[j] / 255f;
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                resultV[j] = 0f;
+            }
         }
 #endif
     }
@@ -1431,32 +1456,40 @@ namespace GLTFast.Jobs {
         [NativeDisableUnsafePtrRestriction]
         public float4* result;
 
+        [ReadOnly]
+        public int componentCount;
+
 #if UNITY_JOBS
         public void Execute(int i, int count) {
-            var resultV = (float4*) ((byte*)result + i*outputByteStride);
+            var resultV = (float*) ((byte*)result + i*outputByteStride);
             var off = (ushort*) (input + i*inputByteStride);
             
             for (var x = 0; x < count; x++) {
-                *resultV = new float4(
-                    off[0] / (float) ushort.MaxValue,
-                    off[1] / (float) ushort.MaxValue,
-                    off[2] / (float) ushort.MaxValue,
-                    off[3] / (float) ushort.MaxValue
-                    );
-                resultV = (float4*)((byte*)resultV + outputByteStride);
+                for (int j = 0; j < componentCount; j++)
+                {
+                    resultV[j] = off[j];
+                }
+                for (int j = componentCount; j < 4; j++)
+                {
+                    resultV[j] = 0f;
+                }
+                resultV = (float*)((byte*)resultV + outputByteStride);
                 off = (ushort*) ((byte*)off + inputByteStride);
             }
         }
 #else
         public void Execute(int i) {
-            var resultV = (float4*) (((byte*)result) + (i*outputByteStride));
+            var resultV = (float*) (((byte*)result) + (i*outputByteStride));
             var off = (ushort*) (input + i*inputByteStride);
-            *resultV = new float4(
-                off[0] / (float) ushort.MaxValue,
-                off[1] / (float) ushort.MaxValue,
-                off[2] / (float) ushort.MaxValue,
-                off[3] / (float) ushort.MaxValue
-                );
+
+            for (int j = 0; j < componentCount; j++)
+            {
+                resultV[j] = off[j];
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                resultV[j] = 0f;
+            }
         }
 #endif
     }
@@ -2073,11 +2106,21 @@ namespace GLTFast.Jobs {
         [ReadOnly]
         public int outputByteStride;
 
+        [ReadOnly]
+        public int componentCount;
+
         public void Execute(int i)
         {
-            var resultV = (uint4*) (((byte*)result) + (i*outputByteStride));
+            var resultV = (uint*) (((byte*)result) + (i*outputByteStride));
             var off = input + (i*inputByteStride);
-            *resultV = new uint4(off[0],off[1],off[2],off[3]);
+            for (int j = 0; j < componentCount; j++)
+            {
+                resultV[j] = off[j];
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                resultV[j] = 0;
+            }
         }
     }
 
@@ -2098,11 +2141,21 @@ namespace GLTFast.Jobs {
         [ReadOnly]
         public int outputByteStride;
 
+        [ReadOnly]
+        public int componentCount;
+
         public void Execute(int i)
         {
-            var resultV = (uint4*) (((byte*)result) + (i*outputByteStride));
+            var resultV = (uint*) (((byte*)result) + (i*outputByteStride));
             var off = (ushort*) (input + (i*inputByteStride));
-            *resultV = new uint4(off[0],off[1],off[2],off[3]);
+            for (int j = 0; j < componentCount; j++)
+            {
+                resultV[j] = off[j];
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                resultV[j] = 0;
+            }
         }
     }
 
@@ -2124,11 +2177,21 @@ namespace GLTFast.Jobs {
         [ReadOnly]
         public int outputByteStride;
 
+        [ReadOnly]
+        public int componentCount;
+
         public void Execute(int i)
         {
-            var resultV = (uint4*)(((byte*)result) + (i * outputByteStride));
+            var resultV = (uint*)(((byte*)result) + (i * outputByteStride));
             var off = (uint*)(input + (i * inputByteStride));
-            *resultV = new uint4(off[0], off[1], off[2], off[3]);
+            for (int j = 0;j < componentCount; j++)
+            {
+                *(uint*)((byte*)resultV+j*4) = off[j];
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                *(uint*)((byte*)resultV + j * 4) = 0;
+            }
         }
     }
 

@@ -68,7 +68,7 @@ namespace GLTFast {
                 logger.Error(LogCode.SparseAccessor,"bone weights");
             }
             vData = new NativeArray<VBones>(weightsAcc.count, VertexBufferConfigBase.defaultAllocator);
-            var vDataPtr = (byte*) NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(vData);
+            var vDataPtr = (byte*) NativeArrayUnsafeUtility.GetUnsafePtr(vData);
             Profiler.EndSample();
 
             JobHandle weightsHandle;
@@ -77,6 +77,7 @@ namespace GLTFast {
             {
                 var h = GetWeightsJob(
                     weightsData,
+                    Accessor.GetAccessorAttributeTypeLength(weightsAcc.typeEnum),
                     weightsAcc.count,
                     weightsAcc.componentType,
                     weightsByteStride,
@@ -99,6 +100,7 @@ namespace GLTFast {
                 }
                 var h = GetJointsJob(
                     jointsData,
+                    Accessor.GetAccessorAttributeTypeLength(jointsAcc.typeEnum),
                     jointsAcc.count,
                     jointsAcc.componentType,
                     jointsByteStride,
@@ -166,6 +168,7 @@ namespace GLTFast {
 
         protected unsafe JobHandle? GetWeightsJob(
             void* input,
+            int componentCount,
             int count,
             GLTFComponentType inputType,
             int inputByteStride,
@@ -179,10 +182,11 @@ namespace GLTFast {
             switch(inputType) {
                 case GLTFComponentType.Float:
                     var jobTangentI = new Jobs.ConvertBoneWeightsFloatToFloatInterleavedJob();
-                    jobTangentI.inputByteStride = inputByteStride>0 ? inputByteStride : 16;
+                    jobTangentI.inputByteStride = inputByteStride>0 ? inputByteStride : componentCount * 4;
                     jobTangentI.input = (byte*)input;
                     jobTangentI.outputByteStride = outputByteStride;
                     jobTangentI.result = output;
+                    jobTangentI.componentCount = componentCount;
 #if UNITY_JOBS
                     jobHandle = jobTangentI.ScheduleBatch(count,GltfImport.DefaultBatchCount);
 #else
@@ -191,11 +195,12 @@ namespace GLTFast {
                     break;
                 case GLTFComponentType.UnsignedShort: {
                     var job = new Jobs.ConvertBoneWeightsUInt16ToFloatInterleavedJob {
-                        inputByteStride = inputByteStride>0 ? inputByteStride : 8,
+                        inputByteStride = inputByteStride>0 ? inputByteStride : componentCount *2 ,
                         input = (byte*)input,
                         outputByteStride = outputByteStride,
                         result = output
                     };
+                    job.componentCount = componentCount;
 #if UNITY_JOBS
                     jobHandle = job.ScheduleBatch(count,GltfImport.DefaultBatchCount);
 #else
@@ -205,11 +210,12 @@ namespace GLTFast {
                 }
                 case GLTFComponentType.UnsignedByte: {
                     var job = new Jobs.ConvertBoneWeightsUInt8ToFloatInterleavedJob {
-                        inputByteStride = inputByteStride>0 ? inputByteStride : 4,
+                        inputByteStride = inputByteStride>0 ? inputByteStride : componentCount,
                         input = (byte*)input,
                         outputByteStride = outputByteStride,
                         result = output
                     };
+                    job.componentCount = componentCount;
 #if UNITY_JOBS
                     jobHandle = job.ScheduleBatch(count,GltfImport.DefaultBatchCount);
 #else
@@ -229,6 +235,7 @@ namespace GLTFast {
 
         static unsafe JobHandle? GetJointsJob(
             void* input,
+            int componentCount,
             int count,
             GLTFComponentType inputType,
             int inputByteStride,
@@ -242,26 +249,29 @@ namespace GLTFast {
             switch(inputType) {
                 case GLTFComponentType.UnsignedByte:
                     var jointsUInt8Job = new Jobs.ConvertBoneJointsUInt8ToUInt32Job();
-                    jointsUInt8Job.inputByteStride = inputByteStride>0 ? inputByteStride : 4;
+                    jointsUInt8Job.inputByteStride = inputByteStride>0 ? inputByteStride : componentCount;
                     jointsUInt8Job.input = (byte*)input;
                     jointsUInt8Job.outputByteStride = outputByteStride;
                     jointsUInt8Job.result = output;
+                    jointsUInt8Job.componentCount = componentCount;
                     jobHandle = jointsUInt8Job.Schedule(count,GltfImport.DefaultBatchCount);
                     break;
                 case GLTFComponentType.UnsignedShort:
                     var jointsUInt16Job = new Jobs.ConvertBoneJointsUInt16ToUInt32Job();
-                    jointsUInt16Job.inputByteStride = inputByteStride>0 ? inputByteStride : 8;
+                    jointsUInt16Job.inputByteStride = inputByteStride>0 ? inputByteStride : componentCount * 2;
                     jointsUInt16Job.input = (byte*)input;
                     jointsUInt16Job.outputByteStride = outputByteStride;
                     jointsUInt16Job.result = output;
+                    jointsUInt16Job.componentCount = componentCount;
                     jobHandle = jointsUInt16Job.Schedule(count,GltfImport.DefaultBatchCount);
                     break;
                 case GLTFComponentType.UnsignedInt:
                     var jointsUInt32Job = new Jobs.ConvertBoneJointsUInt32ToUInt32Job();
-                    jointsUInt32Job.inputByteStride = inputByteStride > 0 ? inputByteStride : 8;
+                    jointsUInt32Job.inputByteStride = inputByteStride > 0 ? inputByteStride : componentCount * 4;
                     jointsUInt32Job.input = (byte*)input;
                     jointsUInt32Job.outputByteStride = outputByteStride;
                     jointsUInt32Job.result = output;
+                    jointsUInt32Job.componentCount = componentCount;
                     jobHandle = jointsUInt32Job.Schedule(count, GltfImport.DefaultBatchCount);
                     break;
                 default:
