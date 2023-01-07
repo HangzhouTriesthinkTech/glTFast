@@ -2,8 +2,11 @@ Shader "Cloth/shader_cloth_common_single_side"
 {
     Properties
     {
+        _CraftNormal ("Normal", 2D) = "bump" {}
         _AOTex("Occlusion", 2D) = "white" {}
+        _Mask("Mask", 2D) = "white" {}
 		_Color("Color", Color) = (1,1,1,1)
+        
         _FabricTex ("Fabric Tex", 2D) = "white" {}
         _FabricNormal ("Fabric Normal", 2D) = "bump" {}
         _FabricRoughness ("Fabric Roughness", 2D) = "white" {}
@@ -30,8 +33,10 @@ Shader "Cloth/shader_cloth_common_single_side"
 
         #pragma surface surf Standard fullforwardshadows
         
+        sampler2D _CraftNormal;
         sampler2D _AOTex;
 		float4 _Color;
+        sampler2D _Mask;
 
         sampler2D _FabricTex;
         sampler2D _FabricNormal;
@@ -116,7 +121,7 @@ Shader "Cloth/shader_cloth_common_single_side"
             o.Smoothness = 1.0 - saturate(Roughness.r * _RoughnessAdjust);
             o.Alpha = BaseColor.a;
             o.Normal = Normal;
-            o.Occlusion = 1.0 - saturate((1.0 - Occlusion.x) * _OcclusionAdjust);
+            o.Occlusion = 1.0 - saturate((1.0 - Occlusion.g) * _OcclusionAdjust);
         }
         ENDCG
     }

@@ -47,6 +47,9 @@ namespace GLTFast.Export
         static readonly int k_Roughness = Shader.PropertyToID("_Roughness");
         static readonly int k_Occlusion = Shader.PropertyToID("_Occlusion");
 
+        static readonly int k_Intensity = Shader.PropertyToID("_Intensity");
+        static readonly int k_CraftNormal = Shader.PropertyToID("_CraftNormal");
+
         public override bool ConvertMaterial(UnityEngine.Material uMaterial, out Schema.Material material, IGltfWritable gltf, ICodeLogger logger)
         {
             material = new Material
@@ -289,6 +292,7 @@ namespace GLTFast.Export
             var eye = new Character.MaterialEye();
             material.extensions.VENDOR_materials_characterEye = eye;
             eye.specular = ExportAnyTexture(uMaterial, k_Specular, gltf);
+            eye.intensity = uMaterial.GetFloat(k_Intensity);
             return true;
         }
 
@@ -454,7 +458,8 @@ namespace GLTFast.Export
 
             var ext = new Cloth.MaterialCommon();
             material.extensions.VENDOR_materials_clothCommon = ext;
-
+            ext.mask = ExportAnyTexture(uMaterial, k_Mask, gltf);
+            ext.craftNormal = ExportAnyTexture(uMaterial, k_CraftNormal, gltf);
             material.doubleSided = doubleSided;
             return true;;
         }

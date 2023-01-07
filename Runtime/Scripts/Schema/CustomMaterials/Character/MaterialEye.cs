@@ -7,6 +7,7 @@ namespace GLTFast.Schema.CustomMaterials.Character
     public class MaterialEye
     {
         public TextureInfo specular = null;
+        public float intensity = 1;
 
         internal void GltfSerialize(JsonWriter writer)
         {
@@ -16,6 +17,7 @@ namespace GLTFast.Schema.CustomMaterials.Character
                 writer.AddProperty("specular");
                 specular.GltfSerialize(writer);
             }
+            writer.AddProperty("intensity", this.intensity);
             writer.Close();
         }
     }

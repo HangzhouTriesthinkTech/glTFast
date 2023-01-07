@@ -2,14 +2,17 @@ Shader "Cloth/shader_cloth_common"
 {
     Properties
     {
+        _CraftNormal ("Normal", 2D) = "bump" {}
         _AOTex("Occlusion", 2D) = "white" {}
+        _Mask("Mask", 2D) = "white" {}
 		_Color("Color", Color) = (1,1,1,1)
+        
         _FabricTex ("Fabric Tex", 2D) = "white" {}
         _FabricNormal ("Fabric Normal", 2D) = "bump" {}
         _FabricRoughness ("Fabric Roughness", 2D) = "white" {}
 
         _NormalIntensity("NormalIntensity", Range (0.1,3)) = 1.0
-        _RoughnessAdjust("RoughnessAdjust", Range(0,2.0)) = 0.75
+        _RoughnessAdjust("RoughnessAdjust", Range(0,10.0)) = 0.75
         _OcclusionAdjust("OcclusionAdjust", Range(0,10.0)) = 1.0
 		
 //        _DyeingHue("Dyeing Hue", Range (0,10)) = 1.0
@@ -20,19 +23,18 @@ Shader "Cloth/shader_cloth_common"
     }
     SubShader
     {
-        Tags { 
-            "RenderType"="Opaque"
-            "Queue"="Geometry"
-            "LightMode"="ForwardBase" 
-            }
-        LOD 100
-        Cull Off
+        Tags { "RenderType"="Opaque" }
+        LOD 200
+		Cull Off
         CGPROGRAM
 
         #pragma surface surf Standard fullforwardshadows
-        
+        #pragma target 3.0
+
+        sampler2D _CraftNormal;
         sampler2D _AOTex;
 		float4 _Color;
+        sampler2D _Mask;
 
         sampler2D _FabricTex;
         sampler2D _FabricNormal;
@@ -49,8 +51,16 @@ Shader "Cloth/shader_cloth_common"
         struct Input
         {
             float2 uv_FabricTex;
+            float2 uv_CraftNormal;
             float2 uv_AOTex;
         };
+
+        // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
+        // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
+        // #pragma instancing_options assumeuniformscaling
+        UNITY_INSTANCING_BUFFER_START(Props)
+            // put more per-instance properties here
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 		float Epsilon = 1e-10;
         
@@ -104,19 +114,22 @@ Shader "Cloth/shader_cloth_common"
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
             float4 BaseColor = tex2D (_FabricTex, IN.uv_FabricTex);
-            // float4 Metallic = tex2D (_MetallicTex, IN.uv_MetallicTex);
             float4 Roughness = tex2D ( _FabricRoughness, IN.uv_FabricTex);
             float4 Occlusion = tex2D (_AOTex, IN.uv_AOTex);
-            float3 Normal = UnpackNormal(tex2D(_FabricNormal, IN.uv_FabricTex));
-            
+
+			float3 BasicNormal = UnpackNormal(tex2D(_CraftNormal, IN.uv_CraftNormal));
+            float3 DetailNormal = UnpackNormal(tex2D(_FabricNormal, IN.uv_FabricTex)) * _NormalIntensity;
+            float3 FinalNormal = NormalBlend_UDN(BasicNormal, DetailNormal);
+
             // float3 BaseColorHSV = RGBtoHSV(BaseColor.rgb);
             // float3 DyeingColor = saturate(BaseColorHSV * float3(_DyeingHue, _DyeingSaturation, _DyeingValue));
-            
+            // BaseColor.rgb = HSVtoRGB(DyeingColor);
+
             o.Albedo = BaseColor.rgb * _Color.rgb;
-            o.Metallic = 0;
+            o.Metallic = 0.3;
             o.Smoothness = 1.0 - saturate(Roughness.r * _RoughnessAdjust);
             o.Alpha = BaseColor.a;
-            o.Normal = Normal;
+            o.Normal = FinalNormal;
             o.Occlusion = 1.0 - saturate((1.0 - Occlusion.x) * _OcclusionAdjust);
         }
         ENDCG

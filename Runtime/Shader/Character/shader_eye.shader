@@ -3,6 +3,8 @@ Shader "Character/shader_eye"
     Properties
     {
         _MainTex ("Base Texture", 2D) = "white" {}
+        _Color ("Color", Color) = (1,1,1,1)
+        _Intensity("Intensity",Range(0,1)) = 1	
         _Normal ("Normal Map", 2D) = "white" {}
     	_Specular ("Specular", 2D) = "black" {}
     }
@@ -23,8 +25,11 @@ Shader "Character/shader_eye"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            half3 _Color;
+            half _Intensity;
             sampler2D _Normal;
             sampler2D _Specular;
+            sampler2D _Mask;
 
             struct appdata
             {
@@ -71,7 +76,8 @@ Shader "Character/shader_eye"
                 fixed specular = tex2D(_Specular, i.uv).r;
             	fixed NdotL = saturate(dot(N, L));
             	fixed4 base_color = tex2D(_MainTex, i.uv);
-                fixed3 final_color = base_color.rgb * (NdotL * _LightColor0.xyz * atten + UNITY_LIGHTMODEL_AMBIENT.rgb);// * 0.5 + specular_color;
+                fixed3 final_color = lerp(_Color * _Intensity, base_color.rgb, 1 - base_color.a);
+            	final_color = final_color * (NdotL * _LightColor0.xyz * atten + UNITY_LIGHTMODEL_AMBIENT.rgb);// * 0.5 + specular_color;
             	return fixed4(final_color, 1);
             }
             ENDCG

@@ -97,7 +97,7 @@
 				clip(mask - 0.5);
 				fixed4 ambient = UNITY_LIGHTMODEL_AMBIENT;//环境光
                 fixed attenuation = LIGHT_ATTENUATION(i);//投影
-				float3 albedo = tex2D(_MainTex, i.uv.xy).rgb;
+				float3 albedo = tex2D(_MainTex, i.uv.xy).rgb * _Color.rgb;
 
                 float3 worldPos  = float3(i.T2W0.w, i.T2W1.w, i.T2W2.w);
                 fixed3 lightDir = normalize(UnityWorldSpaceLightDir(worldPos));

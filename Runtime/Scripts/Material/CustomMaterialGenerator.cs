@@ -48,6 +48,9 @@ namespace GLTFast.Materials
         protected static readonly int k_Roughness = Shader.PropertyToID("_Roughness");
         protected static readonly int k_Occlusion = Shader.PropertyToID("_Occlusion");
 
+        protected static readonly int k_Intensity = Shader.PropertyToID("_Intensity");
+        protected static readonly int k_CraftNormal = Shader.PropertyToID("_CraftNormal");
+
 #if UNITY_EDITOR
         protected const string CUSTOM_SHADER_PATH_PREFIX = "Packages/com.atteneder.gltfast/Runtime/Shader/";
 #endif
@@ -296,6 +299,7 @@ namespace GLTFast.Materials
 
             if (gltfMaterial.pbrMetallicRoughness != null)
             {
+                mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
                 CustomTrySetTexture(
                     gltfMaterial.pbrMetallicRoughness.baseColorTexture,
                     mat,
@@ -326,6 +330,7 @@ namespace GLTFast.Materials
 
             if (gltfMaterial.pbrMetallicRoughness != null)
             {
+                mat.SetColor(k_Color, gltfMaterial.pbrMetallicRoughness.baseColor);
                 CustomTrySetTexture(
                     gltfMaterial.pbrMetallicRoughness.baseColorTexture,
                     mat,
@@ -543,6 +548,9 @@ namespace GLTFast.Materials
                 mat.SetFloat(k_NormalIntensity, gltfMaterial.normalTexture.scale);
             }
             mat.doubleSidedGI = gltfMaterial.doubleSided;
+            var ext = gltfMaterial.extensions.VENDOR_materials_clothCommon;
+            CustomTrySetTexture(ext.mask, mat, gltf, k_Mask);
+            CustomTrySetTexture(ext.craftNormal, mat, gltf, k_CraftNormal);
             return mat;
         }
     }
