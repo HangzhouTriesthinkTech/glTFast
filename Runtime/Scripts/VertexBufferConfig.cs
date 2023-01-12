@@ -143,7 +143,7 @@ namespace GLTFast
                 colors = new VertexBufferColors();
             }
 
-            hasBones = weightsAccessorIndex >= 0 && jointsAccessorIndex >= 0;
+            hasBones = /*weightsAccessorIndex >= 0 &&*/ jointsAccessorIndex >= 0;
             if(hasBones) {
                 jobCount++;
                 bones = new VertexBufferBones(logger);
@@ -358,7 +358,7 @@ namespace GLTFast
                 texCoords.ApplyOnMesh(msh,stream,flags);
                 stream++;
             }
-            
+
             if (bones != null) {
                 bones.ApplyOnMesh(msh,stream,flags);
                 stream++;

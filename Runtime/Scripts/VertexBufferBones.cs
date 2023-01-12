@@ -62,19 +62,46 @@ namespace GLTFast {
         {
             Profiler.BeginSample("ScheduleVertexBonesJob");
             Profiler.BeginSample("AllocateNativeArray");
-            
-            buffers.GetAccessor(weightsAccessorIndex, out var weightsAcc, out var weightsData, out var weightsByteStride);
-            if (weightsAcc.isSparse) {
-                logger.Error(LogCode.SparseAccessor,"bone weights");
+
+            buffers.GetAccessor(jointsAccessorIndex, out var jointsAcc, out var jointsData, out var jointsByteStride);
+            if (jointsAcc.isSparse) {
+                logger.Error(LogCode.SparseAccessor, "bone joints");
             }
-            vData = new NativeArray<VBones>(weightsAcc.count, VertexBufferConfigBase.defaultAllocator);
+            vData = new NativeArray<VBones>(jointsAcc.count, VertexBufferConfigBase.defaultAllocator);
             var vDataPtr = (byte*) NativeArrayUnsafeUtility.GetUnsafePtr(vData);
             Profiler.EndSample();
 
-            JobHandle weightsHandle;
-            JobHandle jointsHandle;
-            
+            JobHandle jobHandle;
+
             {
+                var h = GetJointsJob(
+                    jointsData,
+                    Accessor.GetAccessorAttributeTypeLength(jointsAcc.typeEnum),
+                    jointsAcc.count,
+                    jointsAcc.componentType,
+                    jointsByteStride,
+                    (uint4*)(vDataPtr + 16),
+                    32,
+                    logger
+                );
+                if (h.HasValue)
+                {
+                    jobHandle = h.Value;
+                }
+                else
+                {
+                    Profiler.EndSample();
+                    return null;
+                }
+            }
+
+            if (weightsAccessorIndex >= 0)
+            {
+                buffers.GetAccessor(weightsAccessorIndex, out var weightsAcc, out var weightsData, out var weightsByteStride);
+                if (weightsAcc.isSparse)
+                {
+                    logger.Error(LogCode.SparseAccessor, "bone weights");
+                }
                 var h = GetWeightsJob(
                     weightsData,
                     Accessor.GetAccessorAttributeTypeLength(weightsAcc.typeEnum),
@@ -86,37 +113,20 @@ namespace GLTFast {
                     weightsAcc.normalized
                 );
                 if (h.HasValue) {
-                    weightsHandle = h.Value;
+                    jobHandle = JobHandle.CombineDependencies(h.Value, jobHandle);
                 } else {
                     Profiler.EndSample();
                     return null;
                 }
-            }
-
+            } else
             {
-                buffers.GetAccessor(jointsAccessorIndex, out var jointsAcc, out var jointsData, out var jointsByteStride);
-                if (jointsAcc.isSparse) {
-                    logger.Error(LogCode.SparseAccessor,"bone joints");
-                }
-                var h = GetJointsJob(
-                    jointsData,
+                var h = GetDefaultWeightsJob(
                     Accessor.GetAccessorAttributeTypeLength(jointsAcc.typeEnum),
                     jointsAcc.count,
-                    jointsAcc.componentType,
-                    jointsByteStride,
-                    (uint4*)(vDataPtr+16),
-                    32,
-                    logger
-                );
-                if (h.HasValue) {
-                    jointsHandle = h.Value;
-                } else {
-                    Profiler.EndSample();
-                    return null;
-                }
+                    (float4*)vDataPtr, 32
+                    );
+                jobHandle = JobHandle.CombineDependencies(h.Value, jobHandle);
             }
-
-            var jobHandle = JobHandle.CombineDependencies(weightsHandle,jointsHandle);
 
             var skinWeights = (int)QualitySettings.skinWeights;
 
@@ -154,7 +164,7 @@ namespace GLTFast {
             dst[offset+1] = new VertexAttributeDescriptor(VertexAttribute.BlendIndices, VertexAttributeFormat.UInt32, 4, stream);
         }
 
-        public override void ApplyOnMesh(UnityEngine.Mesh msh, int stream, MeshUpdateFlags flags = PrimitiveCreateContextBase.defaultMeshUpdateFlags) {
+        public override unsafe void ApplyOnMesh(UnityEngine.Mesh msh, int stream, MeshUpdateFlags flags = PrimitiveCreateContextBase.defaultMeshUpdateFlags) {
             Profiler.BeginSample("ApplyBones");
             msh.SetVertexBufferData(vData,0,0,vData.Length,stream,flags);
             Profiler.EndSample();
@@ -229,6 +239,29 @@ namespace GLTFast {
                     break;
             }
 
+            Profiler.EndSample();
+            return jobHandle;
+        }
+
+
+        protected unsafe JobHandle? GetDefaultWeightsJob(
+            int componentCount,
+            int count,
+            float4* output,
+            int outputByteStride
+            )
+        {
+            Profiler.BeginSample("GetWeightsJob");
+            JobHandle? jobHandle;
+            var jobTangentI = new Jobs.InitDefaultBoneWeightsInterleavedJob();
+            jobTangentI.outputByteStride = outputByteStride;
+            jobTangentI.componentCount = componentCount;
+            jobTangentI.result = output;
+#if UNITY_JOBS
+            jobHandle = jobTangentI.ScheduleBatch(count,GltfImport.DefaultBatchCount);
+#else
+            jobHandle = jobTangentI.Schedule(count, GltfImport.DefaultBatchCount);
+#endif
             Profiler.EndSample();
             return jobHandle;
         }

@@ -1373,6 +1373,57 @@ namespace GLTFast.Jobs {
     }
 
     [BurstCompile]
+    unsafe struct InitDefaultBoneWeightsInterleavedJob :
+#if UNITY_JOBS
+        IJobParallelForBatch
+#else
+        IJobParallelFor
+#endif
+    {
+        [ReadOnly]
+        public int outputByteStride;
+
+        [ReadOnly]
+        [NativeDisableUnsafePtrRestriction]
+        public float4* result;
+
+        [ReadOnly]
+        public int componentCount;
+
+#if UNITY_JOBS
+        public void Execute(int i, int count) {
+            var resultV = (float*) ((byte*)result + i*outputByteStride);
+           
+            for (var x = 0; x < count; x++) {
+                for (int j = 0; j < componentCount; j++)
+                {
+                    resultV[j] = 1.0f;
+                }
+                for (int j = componentCount; j < 4; j++)
+                {
+                    resultV[j] = 0f;
+                }
+                resultV = (float*)((byte*)resultV + outputByteStride);
+                off = (float*)((byte*)off + inputByteStride);
+            }
+        }
+#else
+        public void Execute(int i)
+        {
+            var resultV = (float*)(((byte*)result) + (i * outputByteStride));
+            for (int j = 0; j < componentCount; j++)
+            {
+                resultV[j] = 1.0f / componentCount;
+            }
+            for (int j = componentCount; j < 4; j++)
+            {
+                resultV[j] = 0f;
+            }
+        }
+#endif
+    }
+
+    [BurstCompile]
     unsafe struct ConvertBoneWeightsUInt8ToFloatInterleavedJob : 
 #if UNITY_JOBS
         IJobParallelForBatch
