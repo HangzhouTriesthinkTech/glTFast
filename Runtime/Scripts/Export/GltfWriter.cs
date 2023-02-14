@@ -2153,7 +2153,55 @@ namespace GLTFast.Export {
             return bufferViewId;
         }
 
+        /// <summary>
+        /// Writes the given data to the main buffer, creates a bufferView and returns its index
+        /// </summary>
+        /// <param name="bufferViewData">Content to write to buffer</param>
+        /// <param name="byteStride">The byte size of an element. Provide it,
+        /// if it cannot be inferred from the accessor</param>
+        /// <param name="byteAlignment">If not zero, the offsets of the bufferView
+        /// will be multiple of it to please alignment rules (padding bytes will be added,
+        /// if required; see https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#data-alignment )
+        /// </param>
+        /// <returns>Buffer view index</returns>
+        int WriteBufferViewToBuffer(NativeSlice<byte> bufferViewData, int? byteStride = null, int byteAlignment = 0)
+        {
+            Profiler.BeginSample("WriteBufferViewToBuffer");
+            var buffer = CertifyBuffer();
+            var byteOffset = buffer.Length;
 
+            if (byteAlignment > 0)
+            {
+                Assert.IsTrue(byteAlignment < 5); // There is no componentType that requires more than 4 bytes
+                var alignmentByteCount = (byteAlignment - (byteOffset % byteAlignment)) % byteAlignment;
+                for (var i = 0; i < alignmentByteCount; i++)
+                {
+                    buffer.WriteByte(0);
+                }
+                // Update byteOffset
+                byteOffset = buffer.Length;
+            }
+
+            buffer.Write(bufferViewData);
+
+            var bufferView = new BufferView
+            {
+                buffer = 0,
+                byteOffset = (int)byteOffset,
+                byteLength = bufferViewData.Length,
+            };
+            if (byteStride.HasValue)
+            {
+                // Adhere data alignment rules
+                Assert.IsTrue(byteStride.Value % 4 == 0);
+                bufferView.byteStride = byteStride.Value;
+            }
+            m_BufferViews = m_BufferViews ?? new List<BufferView>();
+            var bufferViewId = m_BufferViews.Count;
+            m_BufferViews.Add(bufferView);
+            Profiler.EndSample();
+            return bufferViewId;
+        }
 #endif
 
         void Dispose() {
