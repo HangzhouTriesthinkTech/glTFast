@@ -98,10 +98,10 @@ namespace GLTFast.Schema {
                 writer.AddArrayProperty("baseColorFactor", baseColorFactor);
             }
 
-            if(metallicFactor < 1f) {
+            if(metallicFactor != 1f) {
                 writer.AddProperty("metallicFactor", metallicFactor);
             }
-            if(roughnessFactor < 1f) {
+            if(roughnessFactor != 1f) {
                 writer.AddProperty("roughnessFactor", roughnessFactor);
             }
             if(baseColorTexture!=null) {
