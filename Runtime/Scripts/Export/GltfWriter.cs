@@ -968,8 +968,11 @@ namespace GLTFast.Export {
                         continue;
                     }
                     nIndecies[rCount] = j;
+                    deltaVertices[j].x *= -1;
                     nDeltaVertices[rCount] = deltaVertices[j];
+                    deltaNormals[j].x *= -1;
                     nDeltaNormals[rCount] = deltaNormals[j];
+                    deltaTangent[j].x *= -1;
                     nDeltaTagnents[rCount] = deltaTangent[j];
                     ++rCount;
                 }
