@@ -18,12 +18,17 @@ namespace GLTFast.Schema {
     [System.Serializable]
     public class RootExtension {
         public LightsPunctual KHR_lights_punctual;
-        
+        public string VENDOR_metahuman_payload;
+
         internal void GltfSerialize(JsonWriter writer) {
             writer.AddObject();
             if(KHR_lights_punctual!=null) {
                 writer.AddProperty("KHR_lights_punctual");
                 KHR_lights_punctual.GltfSerialize(writer);
+            }
+            if (VENDOR_metahuman_payload != null && VENDOR_metahuman_payload.Length > 0)
+            {
+                writer.AddProperty("VENDOR_metahuman_payload", VENDOR_metahuman_payload);
             }
             writer.Close();
         }

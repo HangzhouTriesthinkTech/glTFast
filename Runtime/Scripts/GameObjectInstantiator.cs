@@ -526,11 +526,20 @@ namespace GLTFast {
         }
         
         /// <inheritdoc />
-        public virtual void EndScene(uint[] rootNodeIndices) {
+        public virtual void EndScene(uint[] rootNodeIndices, string payload) {
             Profiler.BeginSample("EndScene");
             if (rootNodeIndices != null) {
+
                 foreach (var nodeIndex in rootNodeIndices) {
                     nodes[nodeIndex].SetActive(true);
+                }
+                if (payload != null)
+                {
+                    ModelExtraSetting settings = new ModelExtraSetting();
+                    foreach (var nodeIndex in rootNodeIndices)
+                    {
+                        settings.Init(nodes[nodeIndex], payload);
+                    }
                 }
             }
             Profiler.EndSample();

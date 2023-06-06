@@ -148,7 +148,8 @@ namespace GLTFast {
         /// </summary>
         /// <param name="rootNodeIndices">Indices of root level nodes in scene</param>
         void EndScene(
-            uint[] rootNodeIndices
+            uint[] rootNodeIndices,
+            string payload
         );
     }
 }

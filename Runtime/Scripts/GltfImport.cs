@@ -2115,8 +2115,16 @@ namespace GLTFast {
                     await IterateNodes(nodeId,null,PopulateHierarchy);
                 }
             }
-            
-            instantiator.EndScene(scene.nodes);
+            string payload = null;
+
+            if (gltf.extensions != null && gltf.extensions.VENDOR_metahuman_payload != null && gltf.extensions.VENDOR_metahuman_payload.Length > 0)
+            {
+                payload = gltf.extensions.VENDOR_metahuman_payload;
+            }
+
+            instantiator.EndScene(scene.nodes, payload);
+
+
         }
 
         /// <summary>
